@@ -96,7 +96,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
 
     //Initialize the Viewer thread and launch
     mpViewer = new Viewer(this, mpFrameDrawer,mpMapDrawer,mpTracker,strSettingsFile);
-    if(bUseViewer)
+    if(bUseViewer)// && false)
         mptViewer = new thread(&Viewer::Run, mpViewer);
 
     mpTracker->SetViewer(mpViewer);
@@ -201,6 +201,58 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
 
     return mpTracker->GrabImageRGBD(im,depthmap,timestamp);
 }
+
+  cv::Mat System::TrackMonocular(const std::vector<orbslam::KeyPoint>& keypoints,
+                                 const orbslam::ExtractorSettings& settings,
+                                 const double &timestamp)
+{
+    if(mSensor!=MONOCULAR)
+    {
+        cerr << "ERROR: you called TrackMonocular but input sensor was not set to Monocular." << endl;
+        exit(-1);
+    }
+
+    // Check mode change
+    {
+        unique_lock<mutex> lock(mMutexMode);
+        if(mbActivateLocalizationMode)
+        {
+            mpLocalMapper->RequestStop();
+
+            // Wait until Local Mapping has effectively stopped
+            while(!mpLocalMapper->isStopped())
+            {
+                usleep(1000);
+            }
+
+            mpTracker->InformOnlyTracking(true);
+            mbActivateLocalizationMode = false;
+        }
+        if(mbDeactivateLocalizationMode)
+        {
+            mpTracker->InformOnlyTracking(false);
+            mpLocalMapper->Release();
+            mbDeactivateLocalizationMode = false;
+        }
+    }
+
+    // Check reset
+    {
+    unique_lock<mutex> lock(mMutexReset);
+    if(mbReset)
+    {
+        mpTracker->Reset();
+        mbReset = false;
+    }
+    }
+
+  //  return mpTracker->GrabMonocular(im,timestamp);
+  return mpTracker->GrabDescriptorMonocular(keypoints, 
+                                            settings,
+                                            timestamp);
+
+}
+
 
 cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp)
 {
@@ -422,5 +474,10 @@ void System::SaveTrajectoryKITTI(const string &filename)
     f.close();
     cout << endl << "trajectory saved!" << endl;
 }
+
+  int System::getTrackerState(){
+    return  mpTracker->mState;
+  };
+
 
 } //namespace ORB_SLAM

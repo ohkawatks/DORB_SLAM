@@ -24,18 +24,18 @@
 #include<opencv2/core/core.hpp>
 #include<opencv2/features2d/features2d.hpp>
 
-#include"ORBmatcher.h"
-#include"FrameDrawer.h"
-#include"Converter.h"
-#include"Map.h"
-#include"Initializer.h"
+#include "ORBmatcher.h"
+#include "FrameDrawer.h"
+#include "Converter.h"
+#include "Map.h"
+#include "Initializer.h"
+#include "ORBextractor.h"
+#include "Optimizer.h"
+#include "PnPsolver.h"
 
-#include"Optimizer.h"
-#include"PnPsolver.h"
+#include <iostream>
 
-#include<iostream>
-
-#include<mutex>
+#include <mutex>
 
 
 using namespace std;
@@ -234,6 +234,20 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const d
     return mCurrentFrame.mTcw.clone();
 }
 
+cv::Mat Tracking::GrabDescriptorMonocular(const std::vector<orbslam::KeyPoint>& keypoints, 
+                                          const orbslam::ExtractorSettings& settings,
+                                          const double &timestamp)
+{
+  //  if(mState==NOT_INITIALIZED || mState==NO_IMAGES_YET)
+  mCurrentFrame = Frame(keypoints, timestamp, settings, mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
+    //  else
+    //    mCurrentFrame = Frame(keypoints, timestamp, settings, mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
+  Track();
+
+  return mCurrentFrame.mTcw.clone();
+}
+
+
 
 cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp)
 {
@@ -319,6 +333,7 @@ void Tracking::Track()
             {
                 bOK = Relocalization();
             }
+            ///            printf("%d:bok\n", bOK);
         }
         else
         {
@@ -397,6 +412,7 @@ void Tracking::Track()
         // If we have an initial estimation of the camera pose and matching. Track the local map.
         if(!mbOnlyTracking)
         {
+//          printf("bok1:%d\n", bOK);
             if(bOK)
                 bOK = TrackLocalMap();
         }
@@ -405,10 +421,11 @@ void Tracking::Track()
             // mbVO true means that there are few matches to MapPoints in the map. We cannot retrieve
             // a local map and therefore we do not perform TrackLocalMap(). Once the system relocalizes
             // the camera we will use the local map again.
+
             if(bOK && !mbVO)
                 bOK = TrackLocalMap();
         }
-
+//        printf("bok2:%d\n", bOK);
         if(bOK)
             mState = OK;
         else

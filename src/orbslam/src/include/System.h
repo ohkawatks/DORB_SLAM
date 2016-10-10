@@ -35,7 +35,9 @@
 #include "KeyFrameDatabase.h"
 #include "ORBVocabulary.h"
 #include "Viewer.h"
-
+#include "orbslam/OrbDescriptor.h"
+#include "orbslam/KeyPoint.h"
+#include "orbslam/ExtractorSettings.h"
 namespace ORB_SLAM2
 {
 
@@ -76,6 +78,9 @@ public:
     // Input images: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.
     // Returns the camera pose (empty if tracking fails).
     cv::Mat TrackMonocular(const cv::Mat &im, const double &timestamp);
+    cv::Mat TrackMonocular(const std::vector<orbslam::KeyPoint>& keypoints,
+                           const orbslam::ExtractorSettings& settings,
+                           const double &timestamp);
 
     // This stops local mapping thread (map building) and performs only camera tracking.
     void ActivateLocalizationMode();
@@ -109,7 +114,8 @@ public:
     // TODO: Save/Load functions
     // SaveMap(const string &filename);
     // LoadMap(const string &filename);
-
+  
+    int getTrackerState();
 private:
 
     // Input sensor

@@ -37,30 +37,38 @@
 #include "Initializer.h"
 #include "MapDrawer.h"
 #include "System.h"
+#include "orbslam/OrbDescriptor.h"
+#include "orbslam/KeyPoint.h"
 
 #include <mutex>
 
 namespace ORB_SLAM2
 {
 
-class Viewer;
-class FrameDrawer;
-class Map;
-class LocalMapping;
-class LoopClosing;
-class System;
+  class Viewer;
+  class FrameDrawer;
+  class Map;
+  class LocalMapping;
+  class LoopClosing;
+  class System;
 
-class Tracking
-{  
+  class Tracking
+  {  
 
-public:
+  public:
     Tracking(System* pSys, ORBVocabulary* pVoc, FrameDrawer* pFrameDrawer, MapDrawer* pMapDrawer, Map* pMap,
              KeyFrameDatabase* pKFDB, const string &strSettingPath, const int sensor);
+
+    //    Tracking(System* pSys, ORBVocabulary* pVoc, FrameDrawer* pFrameDrawer, MapDrawer* pMapDrawer, Map* pMap,
+    //             KeyFrameDatabase* pKFDB, const string &strSettingPath, const int sensor);
 
     // Preprocess the input and call Track(). Extract features and performs stereo matching.
     cv::Mat GrabImageStereo(const cv::Mat &imRectLeft,const cv::Mat &imRectRight, const double &timestamp);
     cv::Mat GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const double &timestamp);
     cv::Mat GrabImageMonocular(const cv::Mat &im, const double &timestamp);
+    cv::Mat GrabDescriptorMonocular(const std::vector<orbslam::KeyPoint>& keypoints, 
+                                    const orbslam::ExtractorSettings& settings,
+                                    const double &timestamp);
 
     void SetLocalMapper(LocalMapping* pLocalMapper);
     void SetLoopClosing(LoopClosing* pLoopClosing);
@@ -75,15 +83,15 @@ public:
     void InformOnlyTracking(const bool &flag);
 
 
-public:
+  public:
 
     // Tracking states
     enum eTrackingState{
-        SYSTEM_NOT_READY=-1,
-        NO_IMAGES_YET=0,
-        NOT_INITIALIZED=1,
-        OK=2,
-        LOST=3
+      SYSTEM_NOT_READY=-1,
+      NO_IMAGES_YET=0,
+      NOT_INITIALIZED=1,
+      OK=2,
+      LOST=3
     };
 
     eTrackingState mState;
@@ -115,7 +123,7 @@ public:
 
     void Reset();
 
-protected:
+  protected:
 
     // Main tracking function. It is independent of the input sensor.
     void Track();
@@ -214,7 +222,7 @@ protected:
     bool mbRGB;
 
     list<MapPoint*> mlpTemporalPoints;
-};
+  };
 
 } //namespace ORB_SLAM
 

@@ -1,16 +1,21 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(orbslam)
 
-set(CMAKE_CXX_FLAGS "-std=c++11")
+set(CMAKE_C_FLAGS "${CMAKE_C_fLAGS} -Wall -O3 -march=native")# -g -O0")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -O3 -march=native")# -g -O0")
+set(CMAKE_BUILD_TYPE Release)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS cmake_modules
-  roscpp   cv_bridge
+find_package(catkin REQUIRED COMPONENTS 
+  cmake_modules
+  roscpp
+  cv_bridge
+  message_generation
 )
-FIND_PACKAGE(Eigen REQUIRED)
+find_package(Eigen REQUIRED)
+find_package(OpenCV  REQUIRED)
 find_package(Pangolin REQUIRED)
-
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -44,12 +49,13 @@ find_package(Pangolin REQUIRED)
 ##   * uncomment the generate_messages entry below
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
-## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+# Generate messages in the 'msg' folder
+ add_message_files(
+   FILES
+   KeyPoint.msg
+   OrbDescriptor.msg
+   ExtractorSettings.msg
+ )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -65,11 +71,11 @@ find_package(Pangolin REQUIRED)
 #   Action2.action
 # )
 
-## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
-# )
+# Generate added messages and services with any dependencies listed here
+ generate_messages(
+   DEPENDENCIES
+   std_msgs  # Or other packages containing msgs
+ )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -102,8 +108,9 @@ find_package(Pangolin REQUIRED)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include 
-  LIBRARIES orbslam
+  LIBRARIES orbslam 
   CATKIN_DEPENDS roscpp image_transport cv_bridge
+  message_generation
 #  DEPENDS system_lib
 )
 
@@ -157,11 +164,11 @@ add_dependencies(orbslam ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_T
 
 
 ## Declare a C++ executable
- add_executable(orbslam_node src/ros_mono.cc)
+add_executable(orbslam_node src/ros_mono.cc)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
- add_dependencies(orbslam_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} 
+add_dependencies(orbslam_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} 
 )
 
 # Specify libraries to link a library or executable target against
@@ -174,6 +181,35 @@ target_link_libraries(orbslam_node
   ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
   ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
   )
+
+add_executable(orb_extractor_node src/orb_extractor_mono.cpp)
+target_link_libraries(orb_extractor_node
+  ${catkin_LIBRARIES}
+  orbslam
+  ${OpenCV_LIBS}
+  ${EIGEN3_LIBS}
+  ${Pangolin_LIBRARIES}
+  ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
+  ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
+  )
+
+add_executable(orbslam_node_div1 src/dorb_slam_div1.cc)
+
+ ## Add cmake target dependencies of the executable
+ ## same as for the library above
+ add_dependencies(orbslam_node_div1 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
+
+
+target_link_libraries(orbslam_node_div1
+  ${catkin_LIBRARIES}
+  orbslam
+  ${OpenCV_LIBS}
+  ${EIGEN3_LIBS}
+  ${Pangolin_LIBRARIES}
+  ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
+  ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
+  )
+
 
 
 
@@ -205,7 +241,7 @@ target_link_libraries(orbslam_node
 #   PATTERN ".svn" EXCLUDE
 # )
 
-## Mark other files for installation (e.g. launch and bag files, etc.)
+# Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES
 #   # myfile1
 #   # myfile2

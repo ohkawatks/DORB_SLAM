@@ -1,2 +1,6 @@
 devel
 build
+eval
+src/orbslam/Examples
+src/orbslam/Vocabluary
+src/orbslam/proc

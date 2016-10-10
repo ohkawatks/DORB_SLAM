@@ -133,16 +133,27 @@ include_directories(
 # add_dependencies(dataset_reader ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
- add_executable(dataset_reader_node src/dataset_reader_node.cpp)
-
+ add_executable(tum_reader_node src/tum_reader.cpp)
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(dataset_reader_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(tum_reader_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-## Specify libraries to link a library or executable target against
-# target_link_libraries(dataset_reader_node
-#   ${catkin_LIBRARIES}
-# )
+# Specify libraries to link a library or executable target against
+ target_link_libraries(tum_reader_node
+   ${catkin_LIBRARIES}
+ )
+
+
+## Declare a C++ executable
+add_executable(kitti_reader_node src/kitti_reader.cpp)
+## Add cmake target dependencies of the executable
+## same as for the library above
+add_dependencies(kitti_reader_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+# Specify libraries to link a library or executable target against
+ target_link_libraries(kitti_reader_node
+   ${catkin_LIBRARIES}
+ )
 
 #############
 ## Install ##
