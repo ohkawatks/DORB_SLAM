@@ -131,6 +131,7 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     cout << "- Initial Fast Threshold: " << fIniThFAST << endl;
     cout << "- Minimum Fast Threshold: " << fMinThFAST << endl;
 
+    mImGray = cv::Mat(480,640,CV_8UC3, cv::Scalar(0,0,0));
     if(sensor==System::STEREO || sensor==System::RGBD)
     {
         mThDepth = mbf*(float)fSettings["ThDepth"]/fx;
@@ -238,6 +239,7 @@ cv::Mat Tracking::GrabDescriptorMonocular(const std::vector<orbslam::KeyPoint>& 
                                           const orbslam::ExtractorSettings& settings,
                                           const double &timestamp)
 {
+
   //  if(mState==NOT_INITIALIZED || mState==NO_IMAGES_YET)
   mCurrentFrame = Frame(keypoints, timestamp, settings, mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
     //  else
