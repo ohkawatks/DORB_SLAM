@@ -4,15 +4,15 @@ project(dataset_reader)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
+set(CMAKE_BUILD_TYPE Release)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
   std_msgs
-  message_generation
   image_transport
   cv_bridge
 )
-
+find_package(OpenCV  REQUIRED)
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -106,7 +106,8 @@ catkin_package(
 
 #  INCLUDE_DIRS include
 #  LIBRARIES dataset_reader
-CATKIN_DEPENDS  cv_bridge  roscpp   sensor_msgs  std_msgs  message_runtime  image_transport
+CATKIN_DEPENDS  roscpp   sensor_msgs  std_msgs  image_transport cv_bridge  
+DEPENDS opencv
 #  DEPENDS system_lib
 )
 
@@ -141,6 +142,8 @@ add_dependencies(tum_reader_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EX
 # Specify libraries to link a library or executable target against
  target_link_libraries(tum_reader_node
    ${catkin_LIBRARIES}
+   #${OpenCV_LIBS}
+   ${OpenCV_LIBRARIES} 
  )
 
 
@@ -153,6 +156,8 @@ add_dependencies(kitti_reader_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_
 # Specify libraries to link a library or executable target against
  target_link_libraries(kitti_reader_node
    ${catkin_LIBRARIES}
+   #${OpenCV_LIBS}
+   ${OpenCV_LIBRARIES} 
  )
 
 #############

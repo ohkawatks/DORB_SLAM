@@ -88,7 +88,16 @@ int main(int argc, char **argv)
     SLAM.Shutdown();
 
     // Save camera trajectory
-    SLAM.SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory.txt");
+    time_t rawtime;
+    struct tm * timeinfo;
+    char fname[255];
+
+    time (&rawtime);
+    timeinfo = localtime(&rawtime);
+
+    strftime(fname, 80,"KeyFrameTrajectory_div1_%Y%m%d-%I%M%S.txt",timeinfo);
+
+    SLAM.SaveKeyFrameTrajectoryTUM(fname);
 
     ros::shutdown();
 

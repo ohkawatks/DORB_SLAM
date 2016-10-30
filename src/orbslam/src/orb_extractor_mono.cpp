@@ -108,7 +108,7 @@ int main(int argc, char **argv)
 
     return 0;
 }
-int initialized = 0;
+
 void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
 {
 
@@ -144,9 +144,8 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
     std::vector<cv::KeyPoint> keypoints;
     cv::Mat descriptors;
     ORB_SLAM2::ORBextractor* extractor;
-    //    if (initialized < 2){
+
     if (mTrackerState < ORB_SLAM2::Tracking::OK){
-      initialized++;
       extractor = &mIniORBextractor;
     }
     else{

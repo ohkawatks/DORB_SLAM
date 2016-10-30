@@ -265,19 +265,17 @@ Frame::Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor* extra
     mvLevelSigma2 = settings.LevelScaleSigma2;
     mvInvLevelSigma2 = settings.InvLevelScaleSigmas2;
 
-    //mvKeys.resize(keypoints.size());
+    mvKeys.resize(keypoints.size());
     this->mDescriptors = cv::Mat::zeros(cv::Size(32, keypoints.size() ), CV_8U);
 
-    cv::KeyPoint kp;
     for(int i=0; i< keypoints.size();i++){
-      kp.angle=keypoints[i].angle;
-      kp.class_id=keypoints[i].class_id;
-      kp.octave=keypoints[i].octave;
-      kp.pt.x=keypoints[i].pt[0];
-      kp.pt.y=keypoints[i].pt[1];
-      kp.response=keypoints[i].response;
-      kp.size=keypoints[i].size;
-      mvKeys.push_back(kp);
+      mvKeys[i].angle=keypoints[i].angle;
+      mvKeys[i].class_id=keypoints[i].class_id;
+      mvKeys[i].octave=keypoints[i].octave;
+      mvKeys[i].pt.x=keypoints[i].pt[0];
+      mvKeys[i].pt.y=keypoints[i].pt[1];
+      mvKeys[i].response=keypoints[i].response;
+      mvKeys[i].size=keypoints[i].size;
       for(int j =0;j<32;j++){
         this->mDescriptors.data[i*32+j] = keypoints[i].descriptor[j];
       }
