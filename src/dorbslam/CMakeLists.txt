@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(orbslam)
+project(dorbslam)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_fLAGS} -Wall -O3 -march=native")# -g -O0")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -O3 -march=native")# -g -O0")
@@ -183,8 +183,8 @@ src/${PROJECT_NAME}/Initializer.cc
 src/${PROJECT_NAME}/Viewer.cc
 )
 #target_compile_definitions(${PROJECT_NAME}_div2 -DENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT)
-set_target_properties(${PROJECT_NAME}_div2 PROPERTIES COMPILE_DEFINITIONS "ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT=1")
-
+#set_target_properties(${PROJECT_NAME}_div2 PROPERTIES COMPILE_DEFINITIONS "ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT=1 VALIDATION=1")
+target_compile_definitions(${PROJECT_NAME}_div2 PUBLIC ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT=1)# VALIDATION=1)
 ## Declare a C++ library
 # add_library(orbslam
 #   src/${PROJECT_NAME}/orbslam.cpp
@@ -214,16 +214,16 @@ add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EX
 
 
 ## Declare a C++ executable
-add_executable(orbslam_node src/ros_mono.cc)
+add_executable(dorbslam_node src/dorbslam_node.cc)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-add_dependencies(orbslam_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} 
+add_dependencies(dorbslam_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} 
 )
 
 
 # Specify libraries to link a library or executable target against
-target_link_libraries(orbslam_node
+target_link_libraries(dorbslam_node
   ${catkin_LIBRARIES}
   ${PROJECT_NAME}
   ${OpenCV_LIBS}
@@ -244,13 +244,13 @@ target_link_libraries(orb_extractor_node
   ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
   )
 
-add_executable(orbslam_node_div1 src/dorb_slam_div1.cc)
+add_executable(dorbslam_node_div1 src/dorbslam_wo_extractor.cc)
 
  ## Add cmake target dependencies of the executable
  ## same as for the library above
- add_dependencies(orbslam_node_div1 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
+ add_dependencies(dorbslam_node_div1 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
 
-target_link_libraries(orbslam_node_div1
+target_link_libraries(dorbslam_node_div1
   ${catkin_LIBRARIES}
   ${PROJECT_NAME}
   ${OpenCV_LIBS}
@@ -262,14 +262,14 @@ target_link_libraries(orbslam_node_div1
 
 
 #add_executable(orbslam_node_div2 src/dorb_slam_div1.cc)
-add_executable(orbslam_node_div2 src/ros_mono.cc)
+add_executable(dorbslam_node_div2 src/dorbslam_node.cc)
  ## Add cmake target dependencies of the executable
  ## same as for the library above
 
-add_dependencies(orbslam_node_div2 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
+add_dependencies(dorbslam_node_div2 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
 
 
-target_link_libraries(orbslam_node_div2
+target_link_libraries(dorbslam_node_div2
   ${catkin_LIBRARIES}
   ${PROJECT_NAME}_div2
   ${OpenCV_LIBS}
@@ -278,7 +278,29 @@ target_link_libraries(orbslam_node_div2
   ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
   ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
   )
-set_target_properties(orbslam_node_div2 PROPERTIES COMPILE_DEFINITIONS "ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT=1")
+set_target_properties(dorbslam_node_div2 PROPERTIES COMPILE_DEFINITIONS "ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT=1")
+set_target_properties(dorbslam_node_div2 PROPERTIES COMPILE_DEFINITIONS "VALIDATION=1")
+
+#add_executable(orbslam_node_div2 src/dorb_slam_div1.cc)
+add_executable(dorbslam_node_div3 src/dorbslam_wo_extractor.cc)
+ ## Add cmake target dependencies of the executable
+ ## same as for the library above
+
+add_dependencies(dorbslam_node_div3 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
+
+
+target_link_libraries(dorbslam_node_div3
+  ${catkin_LIBRARIES}
+  ${PROJECT_NAME}_div2
+  ${OpenCV_LIBS}
+  ${EIGEN3_LIBS}
+  ${Pangolin_LIBRARIES}
+  ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
+  ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
+  )
+set_target_properties(dorbslam_node_div3 PROPERTIES COMPILE_DEFINITIONS "ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT=1")
+
+
 
 ## Declare a C++ executable
 add_executable(bundle_adjustment_node src/bundle_adjustment_node.cc)

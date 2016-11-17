@@ -4,10 +4,10 @@
   <arg name="vocabulary"/>
   <arg name="setting" />
   <!-- Leg detection -->
-  <node name="orb_extractor_node" pkg="orbslam" type="orb_extractor_node"
+  <node name="orb_extractor_node" pkg="dorbslam" type="orb_extractor_node"
     args="$(arg vocabulary) $(arg setting)" />
 
-  <node name="orb_slam_div1" pkg="orbslam" type="orbslam_node_div1"
+  <node name="dorbslam_div1" pkg="dorbslam" type="dorbslam_node_div1"
     args="$(arg vocabulary) $(arg setting)" />
 
 </launch>

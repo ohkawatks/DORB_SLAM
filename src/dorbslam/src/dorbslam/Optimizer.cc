@@ -34,7 +34,9 @@
 
 #include<mutex>
 
-
+#ifdef VALIDATION
+int gcount=0;
+#endif
 
 //#define ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT
 #ifdef ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT
@@ -471,12 +473,14 @@ void Optimizer::LocalBundleAdjustmentCallExternal(ORB_SLAM2::KeyFrame *pKF,
                                                   bool *pbStopFlag, 
                                                   ORB_SLAM2::Map *pMap)
 {
+
+
     // Local KeyFrames: First Breath Search from Current Keyframe
     list<KeyFrame*> lLocalKeyFrames;
     size_t maxKFid = 0;
     lLocalKeyFrames.push_back(pKF);
     pKF->mnBALocalForKF = pKF->mnId;
-    map<int, KeyFrame*> pkfmap;
+
     g2o::SparseOptimizer optimizer;
     const vector<KeyFrame*> vNeighKFs = pKF->GetVectorCovisibleKeyFrames();
     for(size_t i=0, iend=vNeighKFs.size(); i<iend; i++)
@@ -698,18 +702,28 @@ void Optimizer::LocalBundleAdjustmentCallExternal(ORB_SLAM2::KeyFrame *pKF,
     ros::ServiceClient client = 
       n.serviceClient<orbslam::BundleAdjustment>("bundle_adjustment");
     //    ROS_INFO("request_kf:%d mp:%d edge%d", srv.request.localgraph.vetices_kf.size);
+#ifdef VALIDATION    
     ROS_INFO("MAIN:request_kf:%d mp:%d edge:%d", 
              (int)srv.request.localgraph.vertices_kf.size(),
              (int)srv.request.localgraph.vertices_mp.size(),
              (int)srv.request.localgraph.edges.size());
-
+#endif
     client.call(srv);
 
     //printf("test call service\n");
 
+    //Keyframes
+#ifdef VALIDATION
+    gcount++;
+    char fname[100];
+    sprintf(fname, "validation/external_%04d.txt", gcount);
+    FILE* file = fopen(fname, "a");
+    fprintf(file, "erase:\n");
+#else
     // Get Map Mutex
     unique_lock<mutex> lock(pMap->mMutexMapUpdate);
-    
+#endif
+
     for(size_t i = 0; i<srv.response.localgraph.edges.size();i++){
       orbslam::Edge e = srv.response.localgraph.edges[i];
       for(size_t j = 0;j < srv.request.localgraph.edges.size();j++){
@@ -717,8 +731,13 @@ void Optimizer::LocalBundleAdjustmentCallExternal(ORB_SLAM2::KeyFrame *pKF,
            (e.mpid == srv.request.localgraph.edges[j].mpid)){
           KeyFrame* pKFi = vpEdgeKFMono[j];//vToErase[i].first;
           MapPoint* pMPi = vpMapPointEdgeMono[j];//vToErase[i].second;
+          //printf("(%d, %d)\n", e.kfid, e.mpid);
+#ifdef VALIDATION
+          fprintf(file, "(%d, %d)\n", e.kfid, e.mpid);
+#else
           pKFi->EraseMapPointMatch(pMPi);
           pMPi->EraseObservation(pKFi);
+#endif
         }
       }
     }
@@ -735,7 +754,7 @@ void Optimizer::LocalBundleAdjustmentCallExternal(ORB_SLAM2::KeyFrame *pKF,
 
     // Recover optimized data
 
-    //Keyframes
+    
     for(list<KeyFrame*>::iterator lit=lLocalKeyFrames.begin(), lend=lLocalKeyFrames.end(); lit!=lend; lit++)  {
         KeyFrame* pKF = *lit;
         size_t imax = srv.response.localgraph.vertices_kf.size();
@@ -743,11 +762,20 @@ void Optimizer::LocalBundleAdjustmentCallExternal(ORB_SLAM2::KeyFrame *pKF,
            orbslam::VertexKF& v = srv.response.localgraph.vertices_kf[i];
            if(pKF->mnId == v.id) {
              cv::Mat pose = cv::Mat::zeros(4, 4, CV_32F);
-
+             
              for(size_t j=0;j<16;j++)  pose.at<float>(j) = v.pose[j] ;
              //std::cout << pose << std::endl << std::endl;
              //     //g2o::VertexSE3Expmap* vSE3 = static_cast<g2o::VertexSE3Expmap*>();
+
+#ifdef VALIDATION
+             fprintf(file, "kf[%04d]:", i);
+             for(size_t j=0;j<16;j++) {
+               fprintf(file, "%f, ", v.pose[j]);
+             }
+             fprintf(file, "\n");
+#else
              pKF->SetPose(pose);//;Converter::toCvMat(SE3quat));
+#endif
            }
          }
         //static_cast<g2o::VertexSE3Expmap*>(optimizer.vertex(pKF->mnId));
@@ -764,17 +792,31 @@ void Optimizer::LocalBundleAdjustmentCallExternal(ORB_SLAM2::KeyFrame *pKF,
           cv::Mat pos = cv::Mat::zeros(3, 1, CV_32F);
           //g2o::VertexSBAPointXYZ* vPoint = static_cast<g2o::VertexSBAPointXYZ*>(optimizer.vertex(pMP->mnId+maxKFid+1));
           for(size_t j =0;j<3;j++) pos.at<float>(j) = v.pos[j];
-
+#ifdef VALIDATION
+          fprintf(file, "mp[%04d]:", i);
+             for(size_t j=0;j<3;j++) {
+               fprintf(file, "%f, ", v.pos[j]);
+             }
+             fprintf(file, "\n");
+#else
           pMP->SetWorldPos(pos);//Converter::toCvMat(vPoint->estimate()));
           pMP->UpdateNormalAndDepth();
+#endif
         }
       }
     }
+#ifdef VALIDATION
    ROS_INFO("MAIN:response_kf:%d mp:%d edge:%d", 
              (int)srv.response.localgraph.vertices_kf.size(),
              (int)srv.response.localgraph.vertices_mp.size(),
              (int)srv.response.localgraph.edges.size());
 
+
+   fclose(file);
+   bool temp = false;
+   //   LocalBundleAdjustment(pKF, &temp, pMap);
+#endif
+   
 }
 #endif
 
@@ -1069,9 +1111,15 @@ void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap
             vToErase.push_back(make_pair(pKFi,pMP));
         }
     }
-
+#ifdef VALIDATION
+    char fname[100];
+    sprintf(fname, "validation/internal_%04d.txt", gcount);
+    FILE* file = fopen(fname, "a");
+    fprintf(file, "erase:\n");
+#else
     // Get Map Mutex
     unique_lock<mutex> lock(pMap->mMutexMapUpdate);
+#endif
 
     if(!vToErase.empty())
     {
@@ -1079,30 +1127,56 @@ void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap
         {
             KeyFrame* pKFi = vToErase[i].first;
             MapPoint* pMPi = vToErase[i].second;
+#ifdef VALIDATION
+            fprintf(file, "(%d, %d)\n", pKFi->mnId, pMPi->mnId+maxKFid+1);
+#endif
             pKFi->EraseMapPointMatch(pMPi);
             pMPi->EraseObservation(pKFi);
         }
     }
 
     // Recover optimized data
-
+int count =0;
     //Keyframes
     for(list<KeyFrame*>::iterator lit=lLocalKeyFrames.begin(), lend=lLocalKeyFrames.end(); lit!=lend; lit++)
     {
         KeyFrame* pKF = *lit;
         g2o::VertexSE3Expmap* vSE3 = static_cast<g2o::VertexSE3Expmap*>(optimizer.vertex(pKF->mnId));
         g2o::SE3Quat SE3quat = vSE3->estimate();
-        pKF->SetPose(Converter::toCvMat(SE3quat));
+        cv::Mat pose = Converter::toCvMat(SE3quat);
+#ifdef VALIDATION
+        count++;
+             fprintf(file, "kf[%04d]:",count );
+             for(size_t j=0;j<16;j++) {
+               fprintf(file, "%f, ", pose.at<float>(j));
+             }
+             fprintf(file, "\n");
+#endif
+        pKF->SetPose(pose);
     }
-
+ count =0;
     //Points
     for(list<MapPoint*>::iterator lit=lLocalMapPoints.begin(), lend=lLocalMapPoints.end(); lit!=lend; lit++)
     {
         MapPoint* pMP = *lit;
         g2o::VertexSBAPointXYZ* vPoint = static_cast<g2o::VertexSBAPointXYZ*>(optimizer.vertex(pMP->mnId+maxKFid+1));
-        pMP->SetWorldPos(Converter::toCvMat(vPoint->estimate()));
+        cv::Mat pos = Converter::toCvMat(vPoint->estimate());
+#ifdef VALIDATION
+
+        fprintf(file, "mp[%04d]:", count);
+             for(size_t j=0;j<3;j++) {
+               fprintf(file, "%f, ", pos.at<float>(j));
+             }
+             fprintf(file, "\n");
+        count ++;
+#endif
+
+        pMP->SetWorldPos(pos);
         pMP->UpdateNormalAndDepth();
     }
+#ifdef VALIDATION
+fclose(file);
+#endif
 }
 
 

@@ -77,12 +77,24 @@ void LocalMapping::Run()
             if(!CheckNewKeyFrames() && !stopRequested())
             {
                 // Local BA
-                if(mpMap->KeyFramesInMap()>2)
+              if(mpMap->KeyFramesInMap()>2){
 #ifdef ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT
-                    Optimizer::LocalBundleAdjustmentCallExternal(mpCurrentKeyFrame,&mbAbortBA, mpMap);
+                {
+#ifdef VALIDATION
+                  unique_lock<mutex> lock(mpMap->mMutexMapUpdate);
+#endif
+                  Optimizer::LocalBundleAdjustmentCallExternal(mpCurrentKeyFrame,&mbAbortBA, mpMap);
+
+
+#ifdef VALIDATION
+                  bool temp = false;
+                  Optimizer::LocalBundleAdjustment(mpCurrentKeyFrame,&temp, mpMa);
+#endif
+                }
 #else
                     Optimizer::LocalBundleAdjustment(mpCurrentKeyFrame,&mbAbortBA, mpMap);
 #endif
+              }
                 // Check redundant local Keyframes
                 KeyFrameCulling();
             }
