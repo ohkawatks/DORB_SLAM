@@ -43,6 +43,9 @@ public:
     void static GlobalBundleAdjustemnt(Map* pMap, int nIterations=5, bool *pbStopFlag=NULL,
                                        const unsigned long nLoopKF=0, const bool bRobust = true);
     void static LocalBundleAdjustment(KeyFrame* pKF, bool *pbStopFlag, Map *pMap);
+#ifdef ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT
+    void static LocalBundleAdjustmentCallExternal(KeyFrame* pKF, bool *pbStopFlag, Map *pMap);
+#endif
     int static PoseOptimization(Frame* pFrame);
 
     // if bFixScale is true, 6DoF optimization (stereo,rgbd), 7DoF otherwise (mono)
@@ -56,6 +59,7 @@ public:
     static int OptimizeSim3(KeyFrame* pKF1, KeyFrame* pKF2, std::vector<MapPoint *> &vpMatches1,
                             g2o::Sim3 &g2oS12, const float th2, const bool bFixScale);
 };
+
 
 } //namespace ORB_SLAM
 

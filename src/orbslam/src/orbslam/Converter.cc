@@ -60,6 +60,7 @@ cv::Mat Converter::toCvMat(const g2o::Sim3 &Sim3)
     return toCvSE3(s*eigR,eigt);
 }
 
+
 cv::Mat Converter::toCvMat(const Eigen::Matrix<double,4,4> &m)
 {
     cv::Mat cvMat(4,4,CV_32F);

@@ -78,8 +78,11 @@ void LocalMapping::Run()
             {
                 // Local BA
                 if(mpMap->KeyFramesInMap()>2)
+#ifdef ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT
+                    Optimizer::LocalBundleAdjustmentCallExternal(mpCurrentKeyFrame,&mbAbortBA, mpMap);
+#else
                     Optimizer::LocalBundleAdjustment(mpCurrentKeyFrame,&mbAbortBA, mpMap);
-
+#endif
                 // Check redundant local Keyframes
                 KeyFrameCulling();
             }

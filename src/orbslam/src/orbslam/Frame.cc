@@ -268,7 +268,7 @@ Frame::Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor* extra
     mvKeys.resize(keypoints.size());
     this->mDescriptors = cv::Mat::zeros(cv::Size(32, keypoints.size() ), CV_8U);
 
-    for(int i=0; i< keypoints.size();i++){
+    for(size_t i=0; i< keypoints.size();i++){
       mvKeys[i].angle=keypoints[i].angle;
       mvKeys[i].class_id=keypoints[i].class_id;
       mvKeys[i].octave=keypoints[i].octave;

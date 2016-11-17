@@ -1,0 +1,12 @@
+float64 fx
+float64 fy
+float64 cx
+float64 cy
+float64 x
+float64 y
+uint32  mpid
+uint32  kfid
+#float64 chi2
+float64 depth
+float64 invsigma2
+uint32     isBadMp

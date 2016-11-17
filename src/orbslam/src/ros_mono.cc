@@ -74,8 +74,11 @@ int main(int argc, char **argv)
 
     time (&rawtime);
     timeinfo = localtime(&rawtime);
-
+#ifdef ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT
+    strftime(fname, 80,"KeyFrameTrajectory_div2_%Y%m%d-%I%M%S.txt",timeinfo);
+#else
     strftime(fname, 80,"KeyFrameTrajectory_%Y%m%d-%I%M%S.txt",timeinfo);
+#endif
     // Save camera trajectory
     SLAM.SaveKeyFrameTrajectoryTUM(fname);
 

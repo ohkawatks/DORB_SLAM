@@ -55,14 +55,17 @@ find_package(Pangolin REQUIRED)
    KeyPoint.msg
    OrbDescriptor.msg
    ExtractorSettings.msg
+   Edge.msg
+   VertexKF.msg
+   VertexMP.msg
+   LocalGraph.msg
  )
 
-## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+# Generate services in the 'srv' folder
+ add_service_files(
+   FILES
+   BundleAdjustment.srv
+ )
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -130,6 +133,11 @@ include_directories(
   Thirdparty/g2o/g2o/core
 )
 
+# dont define the DENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT 
+# if you like to build the orbslam library without ROS
+
+#add_definitions( -DENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT)
+
 add_library(${PROJECT_NAME} SHARED
 src/${PROJECT_NAME}/System.cc
 src/${PROJECT_NAME}/Tracking.cc
@@ -152,15 +160,57 @@ src/${PROJECT_NAME}/Initializer.cc
 src/${PROJECT_NAME}/Viewer.cc
 )
 
+#define macro only in the orbslam library for div2 
+add_library(${PROJECT_NAME}_div2 SHARED
+src/${PROJECT_NAME}/System.cc
+src/${PROJECT_NAME}/Tracking.cc
+src/${PROJECT_NAME}/LocalMapping.cc
+src/${PROJECT_NAME}/LoopClosing.cc
+src/${PROJECT_NAME}/ORBextractor.cc
+src/${PROJECT_NAME}/ORBmatcher.cc
+src/${PROJECT_NAME}/FrameDrawer.cc
+src/${PROJECT_NAME}/Converter.cc
+src/${PROJECT_NAME}/MapPoint.cc
+src/${PROJECT_NAME}/KeyFrame.cc
+src/${PROJECT_NAME}/Map.cc
+src/${PROJECT_NAME}/MapDrawer.cc
+src/${PROJECT_NAME}/Optimizer.cc
+src/${PROJECT_NAME}/PnPsolver.cc
+src/${PROJECT_NAME}/Frame.cc
+src/${PROJECT_NAME}/KeyFrameDatabase.cc
+src/${PROJECT_NAME}/Sim3Solver.cc
+src/${PROJECT_NAME}/Initializer.cc
+src/${PROJECT_NAME}/Viewer.cc
+)
+#target_compile_definitions(${PROJECT_NAME}_div2 -DENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT)
+set_target_properties(${PROJECT_NAME}_div2 PROPERTIES COMPILE_DEFINITIONS "ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT=1")
+
 ## Declare a C++ library
 # add_library(orbslam
 #   src/${PROJECT_NAME}/orbslam.cpp
 # )
 
+target_link_libraries(${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBS}
+  ${EIGEN3_LIBS}
+  ${Pangolin_LIBRARIES}
+  ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
+  ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
+  )
+target_link_libraries(${PROJECT_NAME}_div2
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBS}
+  ${EIGEN3_LIBS}
+  ${Pangolin_LIBRARIES}
+  ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
+  ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
+  )
+
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-add_dependencies(orbslam ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS}  ${OpenCV_LIBS})
 
 
 ## Declare a C++ executable
@@ -171,10 +221,11 @@ add_executable(orbslam_node src/ros_mono.cc)
 add_dependencies(orbslam_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} 
 )
 
+
 # Specify libraries to link a library or executable target against
 target_link_libraries(orbslam_node
   ${catkin_LIBRARIES}
-  orbslam
+  ${PROJECT_NAME}
   ${OpenCV_LIBS}
   ${EIGEN3_LIBS}
   ${Pangolin_LIBRARIES}
@@ -185,7 +236,7 @@ target_link_libraries(orbslam_node
 add_executable(orb_extractor_node src/orb_extractor_mono.cpp)
 target_link_libraries(orb_extractor_node
   ${catkin_LIBRARIES}
-  orbslam
+  ${PROJECT_NAME}
   ${OpenCV_LIBS}
   ${EIGEN3_LIBS}
   ${Pangolin_LIBRARIES}
@@ -199,10 +250,9 @@ add_executable(orbslam_node_div1 src/dorb_slam_div1.cc)
  ## same as for the library above
  add_dependencies(orbslam_node_div1 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
 
-
 target_link_libraries(orbslam_node_div1
   ${catkin_LIBRARIES}
-  orbslam
+  ${PROJECT_NAME}
   ${OpenCV_LIBS}
   ${EIGEN3_LIBS}
   ${Pangolin_LIBRARIES}
@@ -210,6 +260,37 @@ target_link_libraries(orbslam_node_div1
   ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
   )
 
+
+#add_executable(orbslam_node_div2 src/dorb_slam_div1.cc)
+add_executable(orbslam_node_div2 src/ros_mono.cc)
+ ## Add cmake target dependencies of the executable
+ ## same as for the library above
+
+add_dependencies(orbslam_node_div2 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
+
+
+target_link_libraries(orbslam_node_div2
+  ${catkin_LIBRARIES}
+  ${PROJECT_NAME}_div2
+  ${OpenCV_LIBS}
+  ${EIGEN3_LIBS}
+  ${Pangolin_LIBRARIES}
+  ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
+  ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
+  )
+set_target_properties(orbslam_node_div2 PROPERTIES COMPILE_DEFINITIONS "ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT=1")
+
+## Declare a C++ executable
+add_executable(bundle_adjustment_node src/bundle_adjustment_node.cc)
+target_link_libraries(bundle_adjustment_node
+  ${catkin_LIBRARIES}
+  ${PROJECT_NAME}
+  ${OpenCV_LIBS}
+  ${EIGEN3_LIBS}
+  ${Pangolin_LIBRARIES}
+  ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
+  ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
+  )
 
 
 

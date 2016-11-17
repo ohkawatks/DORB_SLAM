@@ -34,6 +34,16 @@
 
 #include<mutex>
 
+
+
+//#define ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT
+#ifdef ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT
+#include "ros/ros.h"
+#include "orbslam/LocalGraph.h"
+#include "orbslam/BundleAdjustmentResponse.h"
+#include "orbslam/BundleAdjustment.h"
+#endif
+
 namespace ORB_SLAM2
 {
 
@@ -46,8 +56,13 @@ void Optimizer::GlobalBundleAdjustemnt(Map* pMap, int nIterations, bool* pbStopF
 }
 
 
-void Optimizer::BundleAdjustment(const vector<KeyFrame *> &vpKFs, const vector<MapPoint *> &vpMP,
-                                 int nIterations, bool* pbStopFlag, const unsigned long nLoopKF, const bool bRobust)
+
+void Optimizer::BundleAdjustment(const vector<KeyFrame *> &vpKFs, 
+                                 const vector<MapPoint *> &vpMP,
+                                 int nIterations, 
+                                 bool* pbStopFlag, 
+                                 const unsigned long nLoopKF, 
+                                 const bool bRobust)
 {
     vector<bool> vbNotIncludedMP;
     vbNotIncludedMP.resize(vpMP.size());
@@ -450,6 +465,319 @@ int Optimizer::PoseOptimization(Frame *pFrame)
     return nInitialCorrespondences-nBad;
 }
 
+
+#ifdef ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT
+void Optimizer::LocalBundleAdjustmentCallExternal(ORB_SLAM2::KeyFrame *pKF, 
+                                                  bool *pbStopFlag, 
+                                                  ORB_SLAM2::Map *pMap)
+{
+    // Local KeyFrames: First Breath Search from Current Keyframe
+    list<KeyFrame*> lLocalKeyFrames;
+    size_t maxKFid = 0;
+    lLocalKeyFrames.push_back(pKF);
+    pKF->mnBALocalForKF = pKF->mnId;
+    map<int, KeyFrame*> pkfmap;
+    g2o::SparseOptimizer optimizer;
+    const vector<KeyFrame*> vNeighKFs = pKF->GetVectorCovisibleKeyFrames();
+    for(size_t i=0, iend=vNeighKFs.size(); i<iend; i++)
+    {
+        KeyFrame* pKFi = vNeighKFs[i];
+        pKFi->mnBALocalForKF = pKF->mnId;
+        if(!pKFi->isBad())
+          lLocalKeyFrames.push_back(pKFi);
+    }
+
+    orbslam::BundleAdjustment srv;
+    orbslam::LocalGraph& localgraph =srv.request.localgraph;
+    // Local MapPoints seen in Local KeyFrames
+    list<MapPoint*> lLocalMapPoints;
+    for(list<KeyFrame*>::iterator lit=lLocalKeyFrames.begin(), lend=lLocalKeyFrames.end(); lit!=lend; lit++)
+      {
+        vector<MapPoint*> vpMPs = (*lit)->GetMapPointMatches();
+        for(vector<MapPoint*>::iterator vit=vpMPs.begin(), vend=vpMPs.end(); vit!=vend; vit++)
+          {
+            MapPoint* pMP = *vit;
+            if(pMP)
+              if(!pMP->isBad())
+                if(pMP->mnBALocalForKF!=pKF->mnId)
+                  {
+                    lLocalMapPoints.push_back(pMP);
+                    pMP->mnBALocalForKF=pKF->mnId;
+                  }
+          }
+      }
+
+    // Fixed Keyframes. Keyframes that see Local MapPoints but that are not Local Keyframes
+    list<KeyFrame*> lFixedCameras;
+    for(list<MapPoint*>::iterator lit=lLocalMapPoints.begin(), lend=lLocalMapPoints.end(); lit!=lend; lit++)
+    {
+        map<KeyFrame*,size_t> observations = (*lit)->GetObservations();
+        for(map<KeyFrame*,size_t>::iterator mit=observations.begin(), mend=observations.end(); mit!=mend; mit++)
+        {
+            KeyFrame* pKFi = mit->first;
+            
+            if(pKFi->mnBALocalForKF!=pKF->mnId && pKFi->mnBAFixedForKF!=pKF->mnId)
+            {                
+                pKFi->mnBAFixedForKF=pKF->mnId;
+                if(!pKFi->isBad())
+                    lFixedCameras.push_back(pKFi);
+            }
+        }
+    }
+
+    // Set Local KeyFrame vertices
+    for(list<KeyFrame*>::iterator lit=lLocalKeyFrames.begin(), lend=lLocalKeyFrames.end(); 
+        lit!=lend; 
+        lit++)
+    {
+        KeyFrame* pKFi = *lit;
+        // g2o::VertexSE3Expmap * vSE3 = new g2o::VertexSE3Expmap();
+        // vSE3->setEstimate(Converter::toSE3Quat(pKFi->GetPose()));
+        orbslam::VertexKF v;
+        cv::Mat pose = pKFi->GetPose();
+        //std::cout << pose << std::endl << std::endl;
+        //        v.pose.resize(12);
+        for(size_t i=0;i<16;i++)  v.pose[i] = pose.at<float>(i);
+        
+
+        v.id = pKFi->mnId;
+        v.isFixed = (pKFi->mnId==0);
+        // optimizer.addVertex(vSE3);
+        localgraph.vertices_kf.push_back(v);
+        if(pKFi->mnId>maxKFid)
+            maxKFid=pKFi->mnId;
+    }
+
+    // Set Fixed KeyFrame vertices
+    for(list<KeyFrame*>::iterator lit=lFixedCameras.begin(), lend=lFixedCameras.end();
+        lit!=lend; 
+        lit++)
+    {
+        KeyFrame* pKFi = *lit;
+        // g2o::VertexSE3Expmap * vSE3 = new g2o::VertexSE3Expmap();
+        // vSE3->setEstimate(Converter::toSE3Quat(pKFi->GetPose()));
+        // vSE3->setId(pKFi->mnId);
+        // vSE3->setFixed(true);
+        // optimizer.addVertex(vSE3);
+        orbslam::VertexKF v;
+        cv::Mat pose = pKFi->GetPose();
+        for(int i=0;i<16;i++)  v.pose[i] = pose.at<float>(i);
+        v.id = pKFi->mnId;
+        v.isFixed=true;
+        // optimizer.addVertex(vSE3);
+        localgraph.vertices_kf.push_back(v);
+
+        if(pKFi->mnId>maxKFid)
+            maxKFid=pKFi->mnId;
+    }
+
+    // Set MapPoint vertices
+    const int nExpectedSize = (lLocalKeyFrames.size()+lFixedCameras.size())*lLocalMapPoints.size();
+    
+    vector<g2o::EdgeSE3ProjectXYZ*> vpEdgesMono;
+    vpEdgesMono.reserve(nExpectedSize);
+    
+    vector<KeyFrame*> vpEdgeKFMono;
+    vpEdgeKFMono.reserve(nExpectedSize);
+
+    vector<MapPoint*> vpMapPointEdgeMono;
+    vpMapPointEdgeMono.reserve(nExpectedSize);
+
+    // vector<g2o::EdgeStereoSE3ProjectXYZ*> vpEdgesStereo;
+    // vpEdgesStereo.reserve(nExpectedSize);
+
+    // vector<KeyFrame*> vpEdgeKFStereo;
+    // vpEdgeKFStereo.reserve(nExpectedSize);
+
+    // vector<MapPoint*> vpMapPointEdgeStereo;
+    // vpMapPointEdgeStereo.reserve(nExpectedSize);
+
+    //const float thHuberMono = sqrt(5.991);
+    //    const float thHuberStereo = sqrt(7.815);
+
+    for(list<MapPoint*>::iterator lit=lLocalMapPoints.begin(), lend=lLocalMapPoints.end();
+        lit!=lend; 
+        lit++) {
+        orbslam::VertexMP v;
+        MapPoint* pMP = *lit;
+        //       g2o::VertexSBAPointXYZ* vPoint = new g2o::VertexSBAPointXYZ();
+        //       vPoint->setEstimate(Converter::toVector3d(pMP->GetWorldPos()));
+        int id = pMP->mnId+maxKFid+1;
+        v.id = pMP->mnId+maxKFid+1;
+        //       vPoint->setId(id);
+        //       vPoint->setMarginalized(true);
+        //       optimizer.addVertex(vPoint);
+
+        cv::Mat pos = pMP->GetWorldPos();
+        for(size_t i=0;i<3;i++) v.pos[i] = pos.at<float>(i);
+
+
+        localgraph.vertices_mp.push_back(v);
+
+        const map<KeyFrame*,size_t> observations = pMP->GetObservations();
+
+        // Set edges
+        for(map<KeyFrame*,size_t>::const_iterator mit=observations.begin(), 
+              mend=observations.end(); 
+            mit!=mend; 
+            mit++){
+            KeyFrame* pKFi = mit->first;
+
+            if(!pKFi->isBad())
+              {                
+                const cv::KeyPoint &kpUn = pKFi->mvKeysUn[mit->second];
+
+                // Monocular observation
+                //                if(pKFi->mvuRight[mit->second]<0)
+                //                {
+
+                //g2o::EdgeSE3ProjectXYZ* e = new g2o::EdgeSE3ProjectXYZ();
+                //                e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(id)));
+                //                e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(pKFi->mnId)));
+                orbslam::Edge e;
+                e.mpid = id;
+                e.kfid = pKFi->mnId;
+                //                e->setMeasurement(obs);
+                e.x = kpUn.pt.x;
+                e.y = kpUn.pt.y;
+
+                const float &invSigma2 = pKFi->mvInvLevelSigma2[kpUn.octave];
+                //                e->setInformation(Eigen::Matrix2d::Identity()*invSigma2);
+                e.invsigma2 = invSigma2;
+                //g2o::RobustKernelHuber* rk = new g2o::RobustKernelHuber;
+                //e->setRobustKernel(rk);
+                //rk->setDelta(thHuberMono);
+                
+                e.fx = pKFi->fx;
+                e.fy = pKFi->fy;
+                e.cx = pKFi->cx;
+                e.cy = pKFi->cy;
+                e.isBadMp = pMP->isBad();
+                //optimizer.addEdge(e);
+                localgraph.edges.push_back(e);
+                //                vpEdgesMono.push_back(e);
+                vpEdgeKFMono.push_back(pKFi);
+                vpMapPointEdgeMono.push_back(pMP);
+
+                //                }
+                // else // Stereo observation
+                // {
+                //     Eigen::Matrix<double,3,1> obs;
+                //     const float kp_ur = pKFi->mvuRight[mit->second];
+                //     obs << kpUn.pt.x, kpUn.pt.y, kp_ur;
+
+                //     g2o::EdgeStereoSE3ProjectXYZ* e = new g2o::EdgeStereoSE3ProjectXYZ();
+
+                //     e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(id)));
+                //     e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(pKFi->mnId)));
+                //     e->setMeasurement(obs);
+                //     const float &invSigma2 = pKFi->mvInvLevelSigma2[kpUn.octave];
+                //     Eigen::Matrix3d Info = Eigen::Matrix3d::Identity()*invSigma2;
+                //     e->setInformation(Info);
+
+                //     g2o::RobustKernelHuber* rk = new g2o::RobustKernelHuber;
+                //     e->setRobustKernel(rk);
+                //     rk->setDelta(thHuberStereo);
+
+                //     e->fx = pKFi->fx;
+                //     e->fy = pKFi->fy;
+                //     e->cx = pKFi->cx;
+                //     e->cy = pKFi->cy;
+                //     e->bf = pKFi->mbf;
+
+                //     optimizer.addEdge(e);
+                //     vpEdgesStereo.push_back(e);
+                //     vpEdgeKFStereo.push_back(pKFi);
+                //     vpMapPointEdgeStereo.push_back(pMP);
+                // }
+              }
+          }
+      }
+    // dorslam: call bundle adjustment service
+    ros::NodeHandle n;
+    ros::ServiceClient client = 
+      n.serviceClient<orbslam::BundleAdjustment>("bundle_adjustment");
+    //    ROS_INFO("request_kf:%d mp:%d edge%d", srv.request.localgraph.vetices_kf.size);
+    ROS_INFO("MAIN:request_kf:%d mp:%d edge:%d", 
+             (int)srv.request.localgraph.vertices_kf.size(),
+             (int)srv.request.localgraph.vertices_mp.size(),
+             (int)srv.request.localgraph.edges.size());
+
+    client.call(srv);
+
+    //printf("test call service\n");
+
+    // Get Map Mutex
+    unique_lock<mutex> lock(pMap->mMutexMapUpdate);
+    
+    for(size_t i = 0; i<srv.response.localgraph.edges.size();i++){
+      orbslam::Edge e = srv.response.localgraph.edges[i];
+      for(size_t j = 0;j < srv.request.localgraph.edges.size();j++){
+        if((e.kfid == srv.request.localgraph.edges[j].kfid)&&
+           (e.mpid == srv.request.localgraph.edges[j].mpid)){
+          KeyFrame* pKFi = vpEdgeKFMono[j];//vToErase[i].first;
+          MapPoint* pMPi = vpMapPointEdgeMono[j];//vToErase[i].second;
+          pKFi->EraseMapPointMatch(pMPi);
+          pMPi->EraseObservation(pKFi);
+        }
+      }
+    }
+    // if(!vToErase.empty())
+    //   {
+    //     for(size_t i=0;i<vToErase.size();i++)
+    //       {
+    //         KeyFrame* pKFi = vToErase[i].first;
+    //         MapPoint* pMPi = vToErase[i].second;
+    //         pKFi->EraseMapPointMatch(pMPi);
+    //         pMPi->EraseObservation(pKFi);
+    //       }
+    //   }
+
+    // Recover optimized data
+
+    //Keyframes
+    for(list<KeyFrame*>::iterator lit=lLocalKeyFrames.begin(), lend=lLocalKeyFrames.end(); lit!=lend; lit++)  {
+        KeyFrame* pKF = *lit;
+        size_t imax = srv.response.localgraph.vertices_kf.size();
+        for(size_t i = 0; i<imax; i++){
+           orbslam::VertexKF& v = srv.response.localgraph.vertices_kf[i];
+           if(pKF->mnId == v.id) {
+             cv::Mat pose = cv::Mat::zeros(4, 4, CV_32F);
+
+             for(size_t j=0;j<16;j++)  pose.at<float>(j) = v.pose[j] ;
+             //std::cout << pose << std::endl << std::endl;
+             //     //g2o::VertexSE3Expmap* vSE3 = static_cast<g2o::VertexSE3Expmap*>();
+             pKF->SetPose(pose);//;Converter::toCvMat(SE3quat));
+           }
+         }
+        //static_cast<g2o::VertexSE3Expmap*>(optimizer.vertex(pKF->mnId));
+        //        g2o::SE3Quat SE3quat = vSE3->estimate();
+
+    }
+    //Points
+    for(list<MapPoint*>::iterator lit=lLocalMapPoints.begin(), lend=lLocalMapPoints.end(); lit!=lend; lit++) {
+      MapPoint* pMP = *lit;
+      size_t imax = srv.response.localgraph.vertices_mp.size();
+      for(size_t i = 0;i<imax ; i++){
+        orbslam::VertexMP& v = srv.response.localgraph.vertices_mp[i];
+        if((pMP->mnId+maxKFid+1) == v.id) {
+          cv::Mat pos = cv::Mat::zeros(3, 1, CV_32F);
+          //g2o::VertexSBAPointXYZ* vPoint = static_cast<g2o::VertexSBAPointXYZ*>(optimizer.vertex(pMP->mnId+maxKFid+1));
+          for(size_t j =0;j<3;j++) pos.at<float>(j) = v.pos[j];
+
+          pMP->SetWorldPos(pos);//Converter::toCvMat(vPoint->estimate()));
+          pMP->UpdateNormalAndDepth();
+        }
+      }
+    }
+   ROS_INFO("MAIN:response_kf:%d mp:%d edge:%d", 
+             (int)srv.response.localgraph.vertices_kf.size(),
+             (int)srv.response.localgraph.vertices_mp.size(),
+             (int)srv.response.localgraph.edges.size());
+
+}
+#endif
+
 void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap)
 {    
     // Local KeyFrames: First Breath Search from Current Keyframe
@@ -459,7 +787,7 @@ void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap
     pKF->mnBALocalForKF = pKF->mnId;
 
     const vector<KeyFrame*> vNeighKFs = pKF->GetVectorCovisibleKeyFrames();
-    for(int i=0, iend=vNeighKFs.size(); i<iend; i++)
+    for(size_t i=0, iend=vNeighKFs.size(); i<iend; i++)
     {
         KeyFrame* pKFi = vNeighKFs[i];
         pKFi->mnBALocalForKF = pKF->mnId;
