@@ -228,9 +228,9 @@ Frame::Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor* extra
 }
 
 // monocular
-  Frame::Frame(const std::vector<orbslam::KeyPoint>& keypoints, 
+  Frame::Frame(const std::vector<dorbslam::KeyPoint>& keypoints, 
                const double &timeStamp, 
-               const orbslam::ExtractorSettings& settings,
+               const dorbslam::ExtractorSettings& settings,
                ORBVocabulary* voc, 
                cv::Mat &K, 
                cv::Mat &distCoef, 

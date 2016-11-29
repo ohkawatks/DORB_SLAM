@@ -37,8 +37,8 @@
 #include "Initializer.h"
 #include "MapDrawer.h"
 #include "System.h"
-#include "orbslam/OrbDescriptor.h"
-#include "orbslam/KeyPoint.h"
+#include "dorbslam/OrbDescriptor.h"
+#include "dorbslam/KeyPoint.h"
 
 #include <mutex>
 
@@ -66,8 +66,8 @@ namespace ORB_SLAM2
     cv::Mat GrabImageStereo(const cv::Mat &imRectLeft,const cv::Mat &imRectRight, const double &timestamp);
     cv::Mat GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const double &timestamp);
     cv::Mat GrabImageMonocular(const cv::Mat &im, const double &timestamp);
-    cv::Mat GrabDescriptorMonocular(const std::vector<orbslam::KeyPoint>& keypoints, 
-                                    const orbslam::ExtractorSettings& settings,
+    cv::Mat GrabDescriptorMonocular(const std::vector<dorbslam::KeyPoint>& keypoints, 
+                                    const dorbslam::ExtractorSettings& settings,
                                     const double &timestamp);
 
     void SetLocalMapper(LocalMapping* pLocalMapper);
