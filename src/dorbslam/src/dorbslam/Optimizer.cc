@@ -41,9 +41,9 @@ int gcount=0;
 //#define ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT
 #ifdef ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT
 #include "ros/ros.h"
-#include "orbslam/LocalGraph.h"
-#include "orbslam/BundleAdjustmentResponse.h"
-#include "orbslam/BundleAdjustment.h"
+#include "dorbslam/LocalGraph.h"
+#include "dorbslam/BundleAdjustmentResponse.h"
+#include "dorbslam/BundleAdjustment.h"
 #endif
 
 namespace ORB_SLAM2
@@ -491,8 +491,8 @@ void Optimizer::LocalBundleAdjustmentCallExternal(ORB_SLAM2::KeyFrame *pKF,
           lLocalKeyFrames.push_back(pKFi);
     }
 
-    orbslam::BundleAdjustment srv;
-    orbslam::LocalGraph& localgraph =srv.request.localgraph;
+    dorbslam::BundleAdjustment srv;
+    dorbslam::LocalGraph& localgraph =srv.request.localgraph;
     // Local MapPoints seen in Local KeyFrames
     list<MapPoint*> lLocalMapPoints;
     for(list<KeyFrame*>::iterator lit=lLocalKeyFrames.begin(), lend=lLocalKeyFrames.end(); lit!=lend; lit++)
@@ -537,7 +537,7 @@ void Optimizer::LocalBundleAdjustmentCallExternal(ORB_SLAM2::KeyFrame *pKF,
         KeyFrame* pKFi = *lit;
         // g2o::VertexSE3Expmap * vSE3 = new g2o::VertexSE3Expmap();
         // vSE3->setEstimate(Converter::toSE3Quat(pKFi->GetPose()));
-        orbslam::VertexKF v;
+        dorbslam::VertexKF v;
         cv::Mat pose = pKFi->GetPose();
         //std::cout << pose << std::endl << std::endl;
         //        v.pose.resize(12);
@@ -563,7 +563,7 @@ void Optimizer::LocalBundleAdjustmentCallExternal(ORB_SLAM2::KeyFrame *pKF,
         // vSE3->setId(pKFi->mnId);
         // vSE3->setFixed(true);
         // optimizer.addVertex(vSE3);
-        orbslam::VertexKF v;
+        dorbslam::VertexKF v;
         cv::Mat pose = pKFi->GetPose();
         for(int i=0;i<16;i++)  v.pose[i] = pose.at<float>(i);
         v.id = pKFi->mnId;
@@ -602,7 +602,7 @@ void Optimizer::LocalBundleAdjustmentCallExternal(ORB_SLAM2::KeyFrame *pKF,
     for(list<MapPoint*>::iterator lit=lLocalMapPoints.begin(), lend=lLocalMapPoints.end();
         lit!=lend; 
         lit++) {
-        orbslam::VertexMP v;
+        dorbslam::VertexMP v;
         MapPoint* pMP = *lit;
         //       g2o::VertexSBAPointXYZ* vPoint = new g2o::VertexSBAPointXYZ();
         //       vPoint->setEstimate(Converter::toVector3d(pMP->GetWorldPos()));
@@ -638,7 +638,7 @@ void Optimizer::LocalBundleAdjustmentCallExternal(ORB_SLAM2::KeyFrame *pKF,
                 //g2o::EdgeSE3ProjectXYZ* e = new g2o::EdgeSE3ProjectXYZ();
                 //                e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(id)));
                 //                e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(pKFi->mnId)));
-                orbslam::Edge e;
+                dorbslam::Edge e;
                 e.mpid = id;
                 e.kfid = pKFi->mnId;
                 //                e->setMeasurement(obs);
@@ -700,7 +700,7 @@ void Optimizer::LocalBundleAdjustmentCallExternal(ORB_SLAM2::KeyFrame *pKF,
     // dorslam: call bundle adjustment service
     ros::NodeHandle n;
     ros::ServiceClient client = 
-      n.serviceClient<orbslam::BundleAdjustment>("bundle_adjustment");
+      n.serviceClient<dorbslam::BundleAdjustment>("bundle_adjustment");
     //    ROS_INFO("request_kf:%d mp:%d edge%d", srv.request.localgraph.vetices_kf.size);
 #ifdef VALIDATION    
     ROS_INFO("MAIN:request_kf:%d mp:%d edge:%d", 
@@ -725,7 +725,7 @@ void Optimizer::LocalBundleAdjustmentCallExternal(ORB_SLAM2::KeyFrame *pKF,
 #endif
 
     for(size_t i = 0; i<srv.response.localgraph.edges.size();i++){
-      orbslam::Edge e = srv.response.localgraph.edges[i];
+      dorbslam::Edge e = srv.response.localgraph.edges[i];
       for(size_t j = 0;j < srv.request.localgraph.edges.size();j++){
         if((e.kfid == srv.request.localgraph.edges[j].kfid)&&
            (e.mpid == srv.request.localgraph.edges[j].mpid)){
@@ -759,7 +759,7 @@ void Optimizer::LocalBundleAdjustmentCallExternal(ORB_SLAM2::KeyFrame *pKF,
         KeyFrame* pKF = *lit;
         size_t imax = srv.response.localgraph.vertices_kf.size();
         for(size_t i = 0; i<imax; i++){
-           orbslam::VertexKF& v = srv.response.localgraph.vertices_kf[i];
+           dorbslam::VertexKF& v = srv.response.localgraph.vertices_kf[i];
            if(pKF->mnId == v.id) {
              cv::Mat pose = cv::Mat::zeros(4, 4, CV_32F);
              
@@ -787,7 +787,7 @@ void Optimizer::LocalBundleAdjustmentCallExternal(ORB_SLAM2::KeyFrame *pKF,
       MapPoint* pMP = *lit;
       size_t imax = srv.response.localgraph.vertices_mp.size();
       for(size_t i = 0;i<imax ; i++){
-        orbslam::VertexMP& v = srv.response.localgraph.vertices_mp[i];
+        dorbslam::VertexMP& v = srv.response.localgraph.vertices_mp[i];
         if((pMP->mnId+maxKFid+1) == v.id) {
           cv::Mat pos = cv::Mat::zeros(3, 1, CV_32F);
           //g2o::VertexSBAPointXYZ* vPoint = static_cast<g2o::VertexSBAPointXYZ*>(optimizer.vertex(pMP->mnId+maxKFid+1));

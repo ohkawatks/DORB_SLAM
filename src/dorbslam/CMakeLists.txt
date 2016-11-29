@@ -210,7 +210,7 @@ target_link_libraries(${PROJECT_NAME}_div2
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS}  ${OpenCV_LIBS})
+add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} ${OpenCV_LIBS})
 
 
 ## Declare a C++ executable
@@ -218,7 +218,7 @@ add_executable(dorbslam_node src/dorbslam_node.cc)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-add_dependencies(dorbslam_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} 
+add_dependencies(dorbslam_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS}
 )
 
 
@@ -248,7 +248,7 @@ add_executable(dorbslam_node_div1 src/dorbslam_wo_extractor.cc)
 
  ## Add cmake target dependencies of the executable
  ## same as for the library above
- add_dependencies(dorbslam_node_div1 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
+ add_dependencies(dorbslam_node_div1 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 target_link_libraries(dorbslam_node_div1
   ${catkin_LIBRARIES}
@@ -286,7 +286,7 @@ add_executable(dorbslam_node_div3 src/dorbslam_wo_extractor.cc)
  ## Add cmake target dependencies of the executable
  ## same as for the library above
 
-add_dependencies(dorbslam_node_div3 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
+add_dependencies(dorbslam_node_div3 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 
 target_link_libraries(dorbslam_node_div3

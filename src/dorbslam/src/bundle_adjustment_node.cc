@@ -1,7 +1,7 @@
 #include "ros/ros.h"
 #include "Optimizer.h"
 #include "Converter.h"
-#include "orbslam/BundleAdjustment.h"
+#include "dorbslam/BundleAdjustment.h"
 
 #include "Thirdparty/g2o/g2o/core/block_solver.h"
 #include "Thirdparty/g2o/g2o/core/optimization_algorithm_levenberg.h"
@@ -20,7 +20,7 @@
 
 
 void initOptimizerFromMsg(g2o::SparseOptimizer& optimizer, 
-                          const orbslam::BundleAdjustment::Request  &req, 
+                          const dorbslam::BundleAdjustment::Request  &req, 
                           vector<g2o::EdgeSE3ProjectXYZ*>& vpEdges){
   const float thHuberMono = sqrt(5.991);
   // copy request data to optimizzer buffer
@@ -65,7 +65,7 @@ void initOptimizerFromMsg(g2o::SparseOptimizer& optimizer,
   //      return;
 
   for(size_t i= 0;i<req.localgraph.edges.size();i++){  
-    const orbslam::Edge& edge = req.localgraph.edges[i];
+    const dorbslam::Edge& edge = req.localgraph.edges[i];
     g2o::EdgeSE3ProjectXYZ* e = new g2o::EdgeSE3ProjectXYZ();
     e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(edge.mpid)));
     e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(edge.kfid)));
@@ -90,15 +90,15 @@ void initOptimizerFromMsg(g2o::SparseOptimizer& optimizer,
 }
 
 void packToMsg(const g2o::SparseOptimizer& optimizer, 
-               const orbslam::BundleAdjustment::Request& req,
-               orbslam::BundleAdjustment::Response& res, 
+               const dorbslam::BundleAdjustment::Request& req,
+               dorbslam::BundleAdjustment::Response& res, 
                vector<g2o::EdgeSE3ProjectXYZ*>& vpEdges)
 {
   // keyframe
   res.localgraph.vertices_kf.resize(req.localgraph.vertices_kf.size());
   for(size_t i = 0; i<req.localgraph.vertices_kf.size();i++){
-    const orbslam::VertexKF& v = req.localgraph.vertices_kf[i];
-    orbslam::VertexKF& v_out = res.localgraph.vertices_kf[i];    
+    const dorbslam::VertexKF& v = req.localgraph.vertices_kf[i];
+    dorbslam::VertexKF& v_out = res.localgraph.vertices_kf[i];    
     const g2o::VertexSE3Expmap* vSE3 = static_cast<const g2o::VertexSE3Expmap*>(optimizer.vertex(v.id));
     g2o::SE3Quat SE3quat = vSE3->estimate();
 
@@ -114,8 +114,8 @@ void packToMsg(const g2o::SparseOptimizer& optimizer,
   // mappoint
   res.localgraph.vertices_mp.resize(req.localgraph.vertices_mp.size());
   for(size_t i = 0; i<req.localgraph.vertices_mp.size();i++){
-    orbslam::VertexMP v = req.localgraph.vertices_mp[i];
-    orbslam::VertexMP& v_out = res.localgraph.vertices_mp[i];    
+    dorbslam::VertexMP v = req.localgraph.vertices_mp[i];
+    dorbslam::VertexMP& v_out = res.localgraph.vertices_mp[i];    
     //    cv::Mat pos = pMP->GetWorldPos();
     const g2o::VertexSBAPointXYZ* vPoint = static_cast<const g2o::VertexSBAPointXYZ*>(optimizer.vertex(v.id));
 
@@ -135,7 +135,7 @@ void packToMsg(const g2o::SparseOptimizer& optimizer,
     //if(req.localgraph.vertices_mp[req.localgraph.edges[i].mpid].isBad) continue;
     if(e->chi2()>5.991 || !e->isDepthPositive())
       {
-        orbslam::Edge edge;
+        dorbslam::Edge edge;
         edge.mpid = req.localgraph.edges[i].mpid; // mappoint id
         edge.kfid = req.localgraph.edges[i].kfid; // kfid
         res.localgraph.edges.push_back(edge);
@@ -147,8 +147,8 @@ void packToMsg(const g2o::SparseOptimizer& optimizer,
 
 
 
-bool bundle_adjustment(orbslam::BundleAdjustment::Request  &req,
-         orbslam::BundleAdjustment::Response &res)
+bool bundle_adjustment(dorbslam::BundleAdjustment::Request  &req,
+         dorbslam::BundleAdjustment::Response &res)
 {
   // Setup optimizer
   g2o::SparseOptimizer optimizer;
