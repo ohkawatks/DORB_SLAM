@@ -126,11 +126,10 @@ Start data stream by the data set reader (or camera node)
 #4 Disable GUI
 If you'd like to disable gui, define "_\_DISABLE_GUI" deffinition flag in the CMakefile.
 
-- For the div1 and non distributed node, add following line to CMake
-
+- For the div1 and non distributed node, add following line to dorbslam/CMakeLists.txt
         target_compile_definitions(${PROJECT_NAME} PUBLIC__DISABLE_GUI=1)
 
-- For the div2 and div3 change the line 
+- For the div2 and div3 change the line in the dorbslam/CMakeLists.txt
 
         target_compile_definitions(${PROJECT_NAME}_div2 PUBLIC ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT=1)
 
