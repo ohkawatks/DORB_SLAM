@@ -159,6 +159,7 @@ src/${PROJECT_NAME}/Sim3Solver.cc
 src/${PROJECT_NAME}/Initializer.cc
 src/${PROJECT_NAME}/Viewer.cc
 )
+#target_compile_definitions(${PROJECT_NAME} PUBLIC__DISABLE_GUI=1)
 
 #define macro only in the orbslam library for div2 
 add_library(${PROJECT_NAME}_div2 SHARED
@@ -182,9 +183,9 @@ src/${PROJECT_NAME}/Sim3Solver.cc
 src/${PROJECT_NAME}/Initializer.cc
 src/${PROJECT_NAME}/Viewer.cc
 )
-#target_compile_definitions(${PROJECT_NAME}_div2 -DENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT)
-#set_target_properties(${PROJECT_NAME}_div2 PROPERTIES COMPILE_DEFINITIONS "ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT=1 VALIDATION=1")
-target_compile_definitions(${PROJECT_NAME}_div2 PUBLIC ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT=1)# VALIDATION=1)
+
+#target_compile_definitions(${PROJECT_NAME}_div2 PUBLIC ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT=1 PUBLIC__DISABLE_GUI=1)
+target_compile_definitions(${PROJECT_NAME}_div2 PUBLIC ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT=1)
 ## Declare a C++ library
 # add_library(orbslam
 #   src/${PROJECT_NAME}/orbslam.cpp
@@ -279,7 +280,7 @@ target_link_libraries(dorbslam_node_div2
   ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
   )
 set_target_properties(dorbslam_node_div2 PROPERTIES COMPILE_DEFINITIONS "ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT=1")
-set_target_properties(dorbslam_node_div2 PROPERTIES COMPILE_DEFINITIONS "VALIDATION=1")
+
 
 #add_executable(orbslam_node_div2 src/dorb_slam_div1.cc)
 add_executable(dorbslam_node_div3 src/dorbslam_wo_extractor.cc)

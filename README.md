@@ -123,3 +123,18 @@ Start data stream by the data set reader (or camera node)
           rosrun dataset_reader tum_reader_node PATH_TO_SEQUENCE 
 
 
+#4 Disable GUI
+If you'd like to disable gui, define "_\_DISABLE_GUI" deffinition flag in the CMakefile.
+
+- For the div1 and non distributed node, add following line to CMake
+
+        target_compile_definitions(${PROJECT_NAME} PUBLIC__DISABLE_GUI=1)
+
+- For the div2 and div3 change the line 
+
+        target_compile_definitions(${PROJECT_NAME}_div2 PUBLIC ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT=1)
+
+    into 
+    
+        target_compile_definitions(${PROJECT_NAME}_div2 PUBLIC ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT=1 PUBLIC__DISABLE_GUI=1)
+

@@ -25,7 +25,9 @@
 #include<opencv2/features2d/features2d.hpp>
 
 #include "ORBmatcher.h"
+#ifndef  __DISABLE_GUI
 #include "FrameDrawer.h"
+#endif
 #include "Converter.h"
 #include "Map.h"
 #include "Initializer.h"
@@ -298,9 +300,9 @@ void Tracking::Track()
             StereoInitialization();
         else
             MonocularInitialization();
-
+#ifndef  __DISABLE_GUI
         mpFrameDrawer->Update(this);
-
+#endif
         if(mState!=OK)
             return;
     }
@@ -432,10 +434,10 @@ void Tracking::Track()
             mState = OK;
         else
             mState=LOST;
-
-        // Update drawer
-        mpFrameDrawer->Update(this);
-
+#ifndef  __DISABLE_GUI
+        //Update drawer
+          mpFrameDrawer->Update(this);
+#endif
         // If tracking were good, check if we insert a keyframe
         if(bOK)
         {
@@ -449,9 +451,9 @@ void Tracking::Track()
             }
             else
                 mVelocity = cv::Mat();
-
+#ifndef  __DISABLE_GUI
             mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.mTcw);
-
+#endif
             // Clean temporal point matches
             for(int i=0; i<mCurrentFrame.N; i++)
             {
@@ -572,9 +574,9 @@ void Tracking::StereoInitialization()
         mpMap->SetReferenceMapPoints(mvpLocalMapPoints);
 
         mpMap->mvpKeyFrameOrigins.push_back(pKFini);
-
+#ifndef  __DISABLE_GUI
         mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.mTcw);
-
+#endif
         mState=OK;
     }
 }
@@ -747,9 +749,9 @@ void Tracking::CreateInitialMapMonocular()
     mLastFrame = Frame(mCurrentFrame);
 
     mpMap->SetReferenceMapPoints(mvpLocalMapPoints);
-
+#ifndef  __DISABLE_GUI
     mpMapDrawer->SetCurrentCameraPose(pKFcur->GetPose());
-
+#endif
     mpMap->mvpKeyFrameOrigins.push_back(pKFini);
 
     mState=OK;
@@ -1535,12 +1537,14 @@ bool Tracking::Relocalization()
 
 void Tracking::Reset()
 {
-    mpViewer->RequestStop();
-
+#ifndef  __DISABLE_GUI
+  mpViewer->RequestStop();
+#endif
     cout << "System Reseting" << endl;
+#ifndef  __DISABLE_GUI
     while(!mpViewer->isStopped())
-        usleep(3000);
-
+      usleep(3000);
+#endif
     // Reset Local Mapping
     cout << "Reseting Local Mapper...";
     mpLocalMapper->RequestReset();
@@ -1573,8 +1577,9 @@ void Tracking::Reset()
     mlpReferences.clear();
     mlFrameTimes.clear();
     mlbLost.clear();
-
+#ifndef  __DISABLE_GUI
     mpViewer->Release();
+#endif
 }
 
 void Tracking::ChangeCalibration(const string &strSettingPath)

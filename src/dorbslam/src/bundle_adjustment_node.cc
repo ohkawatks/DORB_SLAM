@@ -157,17 +157,11 @@ bool bundle_adjustment(dorbslam::BundleAdjustment::Request  &req,
   linearSolver = new g2o::LinearSolverEigen<g2o::BlockSolver_6_3::PoseMatrixType>();
 
   g2o::BlockSolver_6_3 * solver_ptr = new g2o::BlockSolver_6_3(linearSolver);
-#ifdef VALIDATION
-  ROS_INFO("BUNDLE1");
-#endif
   g2o::OptimizationAlgorithmLevenberg* solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
   vector<g2o::EdgeSE3ProjectXYZ*> vpEdges;
   optimizer.setAlgorithm(solver);
 
   initOptimizerFromMsg(optimizer, req, vpEdges);
-#ifdef VALIDATION
-  ROS_INFO("BUNDLE2");
-#endif
   optimizer.initializeOptimization();
   optimizer.optimize(5);
 
@@ -182,9 +176,6 @@ bool bundle_adjustment(dorbslam::BundleAdjustment::Request  &req,
       }
     e->setRobustKernel(0);
   }
-#ifdef VALIDATION
-  ROS_INFO("BUNDLE3");
-#endif
     //  bool bDoMore= true;
 
   // if(pbStopFlag)
@@ -199,16 +190,6 @@ bool bundle_adjustment(dorbslam::BundleAdjustment::Request  &req,
   optimizer.initializeOptimization(0);
   optimizer.optimize(10);
   packToMsg(optimizer, req, res, vpEdges);
-#ifdef VALIDATION
-  ROS_INFO("BUNDLE:request_kf:%d mp:%d edge:%d", 
-           (int)req.localgraph.vertices_kf.size(),
-           (int)req.localgraph.vertices_mp.size(),
-           (int)req.localgraph.edges.size());
-  ROS_INFO("BUNDLE:response_kf:%d mp:%d edge:%d", 
-           (int)res.localgraph.vertices_kf.size(),
-           (int)res.localgraph.vertices_mp.size(),
-           (int)res.localgraph.edges.size());
-#endif
   return true;
  }
 
