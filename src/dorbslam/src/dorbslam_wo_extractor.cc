@@ -26,8 +26,8 @@
 
 #include<ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
-#include "orbslam/OrbDescriptor.h"
-#include "orbslam/KeyPoint.h"
+#include "dorbslam/OrbDescriptor.h"
+#include "dorbslam/KeyPoint.h"
 #include "std_msgs/Int32.h"
 #include<opencv2/core/core.hpp>
 
@@ -47,7 +47,7 @@ public:
   
 
   void GrabImage(const sensor_msgs::ImageConstPtr& msg);
-  void GrabDescriptor(const orbslam::OrbDescriptorConstPtr& msg);
+  void GrabDescriptor(const dorbslam::OrbDescriptorConstPtr& msg);
 
 private:
   ORB_SLAM2::System* mpSLAM;
@@ -107,7 +107,7 @@ int main(int argc, char **argv)
     return 0;
 }
 
-void ImageGrabber::GrabDescriptor(const orbslam::OrbDescriptorConstPtr& msg)
+void ImageGrabber::GrabDescriptor(const dorbslam::OrbDescriptorConstPtr& msg)
 {
     // Copy the ros image message to cv::Mat.
     mpSLAM->TrackMonocular(msg->KeyPoints, 

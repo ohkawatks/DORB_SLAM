@@ -237,8 +237,8 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const d
     return mCurrentFrame.mTcw.clone();
 }
 
-cv::Mat Tracking::GrabDescriptorMonocular(const std::vector<orbslam::KeyPoint>& keypoints, 
-                                          const orbslam::ExtractorSettings& settings,
+cv::Mat Tracking::GrabDescriptorMonocular(const std::vector<dorbslam::KeyPoint>& keypoints, 
+                                          const dorbslam::ExtractorSettings& settings,
                                           const double &timestamp)
 {
 

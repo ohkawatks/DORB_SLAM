@@ -204,8 +204,8 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
     return mpTracker->GrabImageRGBD(im,depthmap,timestamp);
 }
 
-  cv::Mat System::TrackMonocular(const std::vector<orbslam::KeyPoint>& keypoints,
-                                 const orbslam::ExtractorSettings& settings,
+  cv::Mat System::TrackMonocular(const std::vector<dorbslam::KeyPoint>& keypoints,
+                                 const dorbslam::ExtractorSettings& settings,
                                  const double &timestamp)
 {
     if(mSensor!=MONOCULAR)

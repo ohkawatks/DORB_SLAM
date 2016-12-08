@@ -30,8 +30,8 @@
 #include <opencv2/core/core.hpp>
 #include "ORBextractor.h"
 #include "System.h"
-#include "orbslam/OrbDescriptor.h"
-#include "orbslam/KeyPoint.h"
+#include "dorbslam/OrbDescriptor.h"
+#include "dorbslam/KeyPoint.h"
 #include "std_msgs/Int32.h"
 #define IMAGE_TOPIC ("/camera/image_raw")
 #define PUBLISH_TOPIC_NAME ("/orb_descriptor")
@@ -55,7 +55,7 @@ public:
      mIniORBextractor(2*nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST),
      mORBextractorLeft(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST),
      msub_state(nh.subscribe(STATE_TOPIC, 1, &ImageGrabber::GrabState, this)),
-     mpub(nh.advertise<orbslam::OrbDescriptor>(PUBLISH_TOPIC_NAME, 1000)),
+     mpub(nh.advertise<dorbslam::OrbDescriptor>(PUBLISH_TOPIC_NAME, 1000)),
     mTrackerState(ORB_SLAM2::Tracking::SYSTEM_NOT_READY)//SYSTEM_NOT_READY
   {
 
@@ -156,9 +156,9 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
     printf("rows:%d,cols%d\n",  descriptors.rows, descriptors.cols);
 
     
-    orbslam::OrbDescriptor desc;
-    orbslam::KeyPoint kp;
-    orbslam::ExtractorSettings settings;
+    dorbslam::OrbDescriptor desc;
+    dorbslam::KeyPoint kp;
+    dorbslam::ExtractorSettings settings;
     // copy descriptors to the message file
     for(unsigned int i = 0;i<keypoints.size();i++){
       kp.angle=keypoints[i].angle;
