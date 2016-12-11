@@ -248,7 +248,7 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
     }
     }
 
-  //  return mpTracker->GrabMonocular(im,timestamp);
+
   return mpTracker->GrabDescriptorMonocular(keypoints, 
                                             settings,
                                             timestamp);
@@ -405,7 +405,7 @@ void System::SaveKeyFrameTrajectoryTUM(const string &filename)
 
     // Transform all keyframes so that the first keyframe is at the origin.
     // After a loop closure the first keyframe might not be at the origin.
-    //cv::Mat Two = vpKFs[0]->GetPoseInverse();
+
 
     ofstream f;
     f.open(filename.c_str());
@@ -415,7 +415,6 @@ void System::SaveKeyFrameTrajectoryTUM(const string &filename)
     {
         KeyFrame* pKF = vpKFs[i];
 
-       // pKF->SetPose(pKF->GetPose()*Two);
 
         if(pKF->isBad())
             continue;

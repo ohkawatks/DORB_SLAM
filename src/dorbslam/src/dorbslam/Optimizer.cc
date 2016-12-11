@@ -532,18 +532,17 @@ void Optimizer::LocalBundleAdjustmentCallExternal(ORB_SLAM2::KeyFrame *pKF,
         lit++)
     {
         KeyFrame* pKFi = *lit;
-        // g2o::VertexSE3Expmap * vSE3 = new g2o::VertexSE3Expmap();
-        // vSE3->setEstimate(Converter::toSE3Quat(pKFi->GetPose()));
+
+
         dorbslam::VertexKF v;
         cv::Mat pose = pKFi->GetPose();
-        //std::cout << pose << std::endl << std::endl;
-        //        v.pose.resize(12);
+
         for(size_t i=0;i<16;i++)  v.pose[i] = pose.at<float>(i);
         
 
         v.id = pKFi->mnId;
         v.isFixed = (pKFi->mnId==0);
-        // optimizer.addVertex(vSE3);
+
         localgraph.vertices_kf.push_back(v);
         if(pKFi->mnId>maxKFid)
             maxKFid=pKFi->mnId;
@@ -555,17 +554,12 @@ void Optimizer::LocalBundleAdjustmentCallExternal(ORB_SLAM2::KeyFrame *pKF,
         lit++)
     {
         KeyFrame* pKFi = *lit;
-        // g2o::VertexSE3Expmap * vSE3 = new g2o::VertexSE3Expmap();
-        // vSE3->setEstimate(Converter::toSE3Quat(pKFi->GetPose()));
-        // vSE3->setId(pKFi->mnId);
-        // vSE3->setFixed(true);
-        // optimizer.addVertex(vSE3);
         dorbslam::VertexKF v;
         cv::Mat pose = pKFi->GetPose();
         for(int i=0;i<16;i++)  v.pose[i] = pose.at<float>(i);
         v.id = pKFi->mnId;
         v.isFixed=true;
-        // optimizer.addVertex(vSE3);
+
         localgraph.vertices_kf.push_back(v);
 
         if(pKFi->mnId>maxKFid)
@@ -584,30 +578,17 @@ void Optimizer::LocalBundleAdjustmentCallExternal(ORB_SLAM2::KeyFrame *pKF,
     vector<MapPoint*> vpMapPointEdgeMono;
     vpMapPointEdgeMono.reserve(nExpectedSize);
 
-    // vector<g2o::EdgeStereoSE3ProjectXYZ*> vpEdgesStereo;
-    // vpEdgesStereo.reserve(nExpectedSize);
-
-    // vector<KeyFrame*> vpEdgeKFStereo;
-    // vpEdgeKFStereo.reserve(nExpectedSize);
-
-    // vector<MapPoint*> vpMapPointEdgeStereo;
-    // vpMapPointEdgeStereo.reserve(nExpectedSize);
-
-    //const float thHuberMono = sqrt(5.991);
-    //    const float thHuberStereo = sqrt(7.815);
 
     for(list<MapPoint*>::iterator lit=lLocalMapPoints.begin(), lend=lLocalMapPoints.end();
         lit!=lend; 
         lit++) {
         dorbslam::VertexMP v;
         MapPoint* pMP = *lit;
-        //       g2o::VertexSBAPointXYZ* vPoint = new g2o::VertexSBAPointXYZ();
-        //       vPoint->setEstimate(Converter::toVector3d(pMP->GetWorldPos()));
+
+
         int id = pMP->mnId+maxKFid+1;
         v.id = pMP->mnId+maxKFid+1;
-        //       vPoint->setId(id);
-        //       vPoint->setMarginalized(true);
-        //       optimizer.addVertex(vPoint);
+
 
         cv::Mat pos = pMP->GetWorldPos();
         for(size_t i=0;i<3;i++) v.pos[i] = pos.at<float>(i);
@@ -628,69 +609,27 @@ void Optimizer::LocalBundleAdjustmentCallExternal(ORB_SLAM2::KeyFrame *pKF,
               {                
                 const cv::KeyPoint &kpUn = pKFi->mvKeysUn[mit->second];
 
-                // Monocular observation
-                //                if(pKFi->mvuRight[mit->second]<0)
-                //                {
-
-                //g2o::EdgeSE3ProjectXYZ* e = new g2o::EdgeSE3ProjectXYZ();
-                //                e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(id)));
-                //                e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(pKFi->mnId)));
                 dorbslam::Edge e;
                 e.mpid = id;
                 e.kfid = pKFi->mnId;
-                //                e->setMeasurement(obs);
+
                 e.x = kpUn.pt.x;
                 e.y = kpUn.pt.y;
 
                 const float &invSigma2 = pKFi->mvInvLevelSigma2[kpUn.octave];
-                //                e->setInformation(Eigen::Matrix2d::Identity()*invSigma2);
+
                 e.invsigma2 = invSigma2;
-                //g2o::RobustKernelHuber* rk = new g2o::RobustKernelHuber;
-                //e->setRobustKernel(rk);
-                //rk->setDelta(thHuberMono);
                 
                 e.fx = pKFi->fx;
                 e.fy = pKFi->fy;
                 e.cx = pKFi->cx;
                 e.cy = pKFi->cy;
                 e.isBadMp = pMP->isBad();
-                //optimizer.addEdge(e);
+
                 localgraph.edges.push_back(e);
-                //                vpEdgesMono.push_back(e);
+
                 vpEdgeKFMono.push_back(pKFi);
                 vpMapPointEdgeMono.push_back(pMP);
-
-                //                }
-                // else // Stereo observation
-                // {
-                //     Eigen::Matrix<double,3,1> obs;
-                //     const float kp_ur = pKFi->mvuRight[mit->second];
-                //     obs << kpUn.pt.x, kpUn.pt.y, kp_ur;
-
-                //     g2o::EdgeStereoSE3ProjectXYZ* e = new g2o::EdgeStereoSE3ProjectXYZ();
-
-                //     e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(id)));
-                //     e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(pKFi->mnId)));
-                //     e->setMeasurement(obs);
-                //     const float &invSigma2 = pKFi->mvInvLevelSigma2[kpUn.octave];
-                //     Eigen::Matrix3d Info = Eigen::Matrix3d::Identity()*invSigma2;
-                //     e->setInformation(Info);
-
-                //     g2o::RobustKernelHuber* rk = new g2o::RobustKernelHuber;
-                //     e->setRobustKernel(rk);
-                //     rk->setDelta(thHuberStereo);
-
-                //     e->fx = pKFi->fx;
-                //     e->fy = pKFi->fy;
-                //     e->cx = pKFi->cx;
-                //     e->cy = pKFi->cy;
-                //     e->bf = pKFi->mbf;
-
-                //     optimizer.addEdge(e);
-                //     vpEdgesStereo.push_back(e);
-                //     vpEdgeKFStereo.push_back(pKFi);
-                //     vpMapPointEdgeStereo.push_back(pMP);
-                // }
               }
           }
       }
@@ -698,10 +637,8 @@ void Optimizer::LocalBundleAdjustmentCallExternal(ORB_SLAM2::KeyFrame *pKF,
     ros::NodeHandle n;
     ros::ServiceClient client = 
       n.serviceClient<dorbslam::BundleAdjustment>("bundle_adjustment");
-    //    ROS_INFO("request_kf:%d mp:%d edge%d", srv.request.localgraph.vetices_kf.size);
-    client.call(srv);
 
-    //printf("test call service\n");
+    client.call(srv);
 
     //Keyframes
     // Get Map Mutex
@@ -714,26 +651,15 @@ void Optimizer::LocalBundleAdjustmentCallExternal(ORB_SLAM2::KeyFrame *pKF,
            (e.mpid == srv.request.localgraph.edges[j].mpid)){
           KeyFrame* pKFi = vpEdgeKFMono[j];//vToErase[i].first;
           MapPoint* pMPi = vpMapPointEdgeMono[j];//vToErase[i].second;
-          //printf("(%d, %d)\n", e.kfid, e.mpid);
+
           pKFi->EraseMapPointMatch(pMPi);
           pMPi->EraseObservation(pKFi);
         }
       }
     }
-    // if(!vToErase.empty())
-    //   {
-    //     for(size_t i=0;i<vToErase.size();i++)
-    //       {
-    //         KeyFrame* pKFi = vToErase[i].first;
-    //         MapPoint* pMPi = vToErase[i].second;
-    //         pKFi->EraseMapPointMatch(pMPi);
-    //         pMPi->EraseObservation(pKFi);
-    //       }
-    //   }
 
     // Recover optimized data
 
-    
     for(list<KeyFrame*>::iterator lit=lLocalKeyFrames.begin(), lend=lLocalKeyFrames.end(); lit!=lend; lit++)  {
         KeyFrame* pKF = *lit;
         size_t imax = srv.response.localgraph.vertices_kf.size();
@@ -743,14 +669,9 @@ void Optimizer::LocalBundleAdjustmentCallExternal(ORB_SLAM2::KeyFrame *pKF,
              cv::Mat pose = cv::Mat::zeros(4, 4, CV_32F);
              
              for(size_t j=0;j<16;j++)  pose.at<float>(j) = v.pose[j] ;
-             //std::cout << pose << std::endl << std::endl;
-             //     //g2o::VertexSE3Expmap* vSE3 = static_cast<g2o::VertexSE3Expmap*>();
-
              pKF->SetPose(pose);//;Converter::toCvMat(SE3quat));
            }
          }
-        //static_cast<g2o::VertexSE3Expmap*>(optimizer.vertex(pKF->mnId));
-        //        g2o::SE3Quat SE3quat = vSE3->estimate();
 
     }
     //Points
@@ -761,7 +682,7 @@ void Optimizer::LocalBundleAdjustmentCallExternal(ORB_SLAM2::KeyFrame *pKF,
         dorbslam::VertexMP& v = srv.response.localgraph.vertices_mp[i];
         if((pMP->mnId+maxKFid+1) == v.id) {
           cv::Mat pos = cv::Mat::zeros(3, 1, CV_32F);
-          //g2o::VertexSBAPointXYZ* vPoint = static_cast<g2o::VertexSBAPointXYZ*>(optimizer.vertex(pMP->mnId+maxKFid+1));
+
           for(size_t j =0;j<3;j++) pos.at<float>(j) = v.pos[j];
           pMP->SetWorldPos(pos);//Converter::toCvMat(vPoint->estimate()));
           pMP->UpdateNormalAndDepth();

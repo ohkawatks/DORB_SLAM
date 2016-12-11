@@ -153,7 +153,6 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
     }
     //extract descriptors
     (*extractor)(img,cv::Mat(), keypoints, descriptors);    
-    printf("rows:%d,cols%d\n",  descriptors.rows, descriptors.cols);
 
     
     dorbslam::OrbDescriptor desc;

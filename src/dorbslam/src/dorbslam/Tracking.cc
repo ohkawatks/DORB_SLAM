@@ -242,10 +242,9 @@ cv::Mat Tracking::GrabDescriptorMonocular(const std::vector<dorbslam::KeyPoint>&
                                           const double &timestamp)
 {
 
-  //  if(mState==NOT_INITIALIZED || mState==NO_IMAGES_YET)
+
   mCurrentFrame = Frame(keypoints, timestamp, settings, mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
-    //  else
-    //    mCurrentFrame = Frame(keypoints, timestamp, settings, mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
+
   Track();
 
   return mCurrentFrame.mTcw.clone();
@@ -337,7 +336,6 @@ void Tracking::Track()
             {
                 bOK = Relocalization();
             }
-            ///            printf("%d:bok\n", bOK);
         }
         else
         {
@@ -416,7 +414,7 @@ void Tracking::Track()
         // If we have an initial estimation of the camera pose and matching. Track the local map.
         if(!mbOnlyTracking)
         {
-//          printf("bok1:%d\n", bOK);
+
             if(bOK)
                 bOK = TrackLocalMap();
         }
@@ -429,7 +427,7 @@ void Tracking::Track()
             if(bOK && !mbVO)
                 bOK = TrackLocalMap();
         }
-//        printf("bok2:%d\n", bOK);
+
         if(bOK)
             mState = OK;
         else

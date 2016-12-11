@@ -250,13 +250,6 @@ Frame::Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor* extra
     mnId=nNextId++;
 
     // Scale Level Info
-    //mnScaleLevels = mpORBextractorLeft->GetLevels();
-    //mvScaleFactors = mpORBextractorLeft->GetScaleFactors();
-    //mvInvScaleFactors = mpORBextractorLeft->GetInverseScaleFactors();
-    //mvLevelSigma2 = mpORBextractorLeft->GetScaleSigmaSquares();
-    //mvInvLevelSigma2 = mpORBextractorLeft->GetInverseScaleSigmaSquares();
-    //mfScaleFactor = mpORBextractorLeft->GetScaleFactor();
-
     mnScaleLevels = settings.levels;
     mfScaleFactor = settings.ScaleFactor;
     mfLogScaleFactor = log(mfScaleFactor);

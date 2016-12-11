@@ -12,12 +12,6 @@
 #include "Thirdparty/g2o/g2o/types/types_seven_dof_expmap.h"
 
 
-// Eigen::Matrix<double,3,1> toVector3d(const std::vector<double>& vec){
-//     Eigen::Matrix<double,3,1> v;
-//     v << vec[0], vec[1], vec[2];
-//     return v;
-// }
-
 
 void initOptimizerFromMsg(g2o::SparseOptimizer& optimizer, 
                           const dorbslam::BundleAdjustment::Request  &req, 
@@ -35,7 +29,7 @@ void initOptimizerFromMsg(g2o::SparseOptimizer& optimizer,
         T[4], T[5], T[6],
         T[8], T[9], T[10];
       t <<T[3], T[7], T[11];
-      //std::cout << R << std::endl << std::endl;
+
       vSE3->setEstimate(g2o::SE3Quat(R,t));
     }
     vSE3->setId(req.localgraph.vertices_kf[i].id);
@@ -50,7 +44,7 @@ void initOptimizerFromMsg(g2o::SparseOptimizer& optimizer,
       Eigen::Matrix<double,3,1> v;
       const boost::array<double, 3ul> vec = req.localgraph.vertices_mp[i].pos;
       v << vec[0], vec[1], vec[2];
-      //std::cout << "after:"<< v <<std::endl << std::endl;
+
       vPoint->setEstimate(v);
     }
 
@@ -58,11 +52,8 @@ void initOptimizerFromMsg(g2o::SparseOptimizer& optimizer,
     vPoint->setMarginalized(true);
     optimizer.addVertex(vPoint);
   }
-  //  unsigned long maxKFid = 0;
 
-  //  if(pbStopFlag)
-  //    if(*pbStopFlag)
-  //      return;
+
 
   for(size_t i= 0;i<req.localgraph.edges.size();i++){  
     const dorbslam::Edge& edge = req.localgraph.edges[i];
@@ -103,7 +94,7 @@ void packToMsg(const g2o::SparseOptimizer& optimizer,
     g2o::SE3Quat SE3quat = vSE3->estimate();
 
     cv::Mat pose = ORB_SLAM2::Converter::toCvMat(SE3quat);
-    //std::cout << "pack2msgcv"<<std::endl<< pose << std::endl << std::endl;
+
     //v_out.pose.resize(12);
     for(size_t i=0;i<16;i++)  v_out.pose[i] = pose.at<float>(i);
     
@@ -116,11 +107,10 @@ void packToMsg(const g2o::SparseOptimizer& optimizer,
   for(size_t i = 0; i<req.localgraph.vertices_mp.size();i++){
     dorbslam::VertexMP v = req.localgraph.vertices_mp[i];
     dorbslam::VertexMP& v_out = res.localgraph.vertices_mp[i];    
-    //    cv::Mat pos = pMP->GetWorldPos();
+
     const g2o::VertexSBAPointXYZ* vPoint = static_cast<const g2o::VertexSBAPointXYZ*>(optimizer.vertex(v.id));
 
     cv::Mat pos = ORB_SLAM2::Converter::toCvMat(vPoint->estimate());
-    //    v_out.pos.reserve(3);
     for(size_t i =0;i<3;i++) v_out.pos[i] = pos.at<float>(i);
     v_out.id = v.id;
   }  
@@ -131,18 +121,15 @@ void packToMsg(const g2o::SparseOptimizer& optimizer,
   for(size_t i=0; i<vpEdges.size();i++){
     g2o::EdgeSE3ProjectXYZ* e = vpEdges[i];
     if(req.localgraph.edges[i].isBadMp) continue;
-    //if(req.localgraph.vertices_mp[i].isBad) continue;
-    //if(req.localgraph.vertices_mp[req.localgraph.edges[i].mpid].isBad) continue;
+
     if(e->chi2()>5.991 || !e->isDepthPositive())
       {
         dorbslam::Edge edge;
         edge.mpid = req.localgraph.edges[i].mpid; // mappoint id
         edge.kfid = req.localgraph.edges[i].kfid; // kfid
         res.localgraph.edges.push_back(edge);
-        //        printf("to delete\n");
       }
   }
-  //  printf("done\n");
 }
 
 
@@ -168,7 +155,7 @@ bool bundle_adjustment(dorbslam::BundleAdjustment::Request  &req,
   // Check inlier observations
   for(size_t i=0; i<vpEdges.size();i++){
     g2o::EdgeSE3ProjectXYZ* e = vpEdges[i];
-    //    if(req.localgraph.vertices_mp[req.localgraph.edges[i].mpid].isBad) continue;
+
     if(req.localgraph.edges[i].isBadMp) continue;
     if(e->chi2()>5.991 || !e->isDepthPositive())
       {
@@ -176,14 +163,6 @@ bool bundle_adjustment(dorbslam::BundleAdjustment::Request  &req,
       }
     e->setRobustKernel(0);
   }
-    //  bool bDoMore= true;
-
-  // if(pbStopFlag)
-  //   if(*pbStopFlag)
-  //     bDoMore = false;
-
-  //  if(bDoMore)
-  //    {
 
   // Check inlier observations
   // Optimize again without the outliers
