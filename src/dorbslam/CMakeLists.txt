@@ -4,6 +4,9 @@ project(dorbslam)
 set(CMAKE_C_FLAGS "${CMAKE_C_fLAGS} -Wall -O3 -march=native")# -g -O0")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -O3 -march=native")# -g -O0")
 set(CMAKE_BUILD_TYPE Release)
+#if would you like to see performance,please comment out following line.
+#add_definitions(-DENABLE_PERFORM)
+
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -59,6 +62,7 @@ find_package(Pangolin REQUIRED)
    VertexKF.msg
    VertexMP.msg
    LocalGraph.msg
+   TrackingState.msg
  )
 
 # Generate services in the 'srv' folder
@@ -131,6 +135,7 @@ include_directories(
   ${Pangolin_INCLUDE_DIRS}
   .
   Thirdparty/g2o/g2o/core
+  ../measurment_controller/include    
 )
 
 # dont define the DENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT 
@@ -158,8 +163,10 @@ src/${PROJECT_NAME}/KeyFrameDatabase.cc
 src/${PROJECT_NAME}/Sim3Solver.cc
 src/${PROJECT_NAME}/Initializer.cc
 src/${PROJECT_NAME}/Viewer.cc
+../measurment_controller/src/measurmentManager.cpp
 )
 #target_compile_definitions(${PROJECT_NAME} PUBLIC__DISABLE_GUI=1)
+add_dependencies( ${PROJECT_NAME} SHARED measurment_controller_generate_messages_cpp)
 
 #define macro only in the orbslam library for div2 
 add_library(${PROJECT_NAME}_div2 SHARED
@@ -182,7 +189,9 @@ src/${PROJECT_NAME}/KeyFrameDatabase.cc
 src/${PROJECT_NAME}/Sim3Solver.cc
 src/${PROJECT_NAME}/Initializer.cc
 src/${PROJECT_NAME}/Viewer.cc
+../measurment_controller/src/measurmentManager.cpp
 )
+add_dependencies( ${PROJECT_NAME}_div2 SHARED measurment_controller_generate_messages_cpp)
 
 #target_compile_definitions(${PROJECT_NAME}_div2 PUBLIC ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT=1 PUBLIC__DISABLE_GUI=1)
 target_compile_definitions(${PROJECT_NAME}_div2 PUBLIC ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT=1)
@@ -216,11 +225,15 @@ add_dependencies(${PROJECT_NAME}_div2 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catk
 
 
 ## Declare a C++ executable
-add_executable(dorbslam_node src/dorbslam_node.cc)
+add_executable(
+dorbslam_node src/dorbslam_node.cc
+../measurment_controller/src/measurmentManager.cpp
+)
+add_dependencies( dorbslam_node SHARED measurment_controller_generate_messages_cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-add_dependencies(dorbslam_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} 
+add_dependencies(dorbslam_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS}
 )
 
 
@@ -235,7 +248,10 @@ target_link_libraries(dorbslam_node
   ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
   )
 
-add_executable(orb_extractor_node src/orb_extractor_mono.cpp)
+add_executable(orb_extractor_node 
+src/orb_extractor_mono.cpp
+../measurment_controller/src/measurmentManager.cpp )
+
 target_link_libraries(orb_extractor_node
   ${catkin_LIBRARIES}
   ${PROJECT_NAME}
@@ -245,8 +261,11 @@ target_link_libraries(orb_extractor_node
   ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
   ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
   )
+add_dependencies( orb_extractor_node measurment_controller_generate_messages_cpp)
 
-add_executable(dorbslam_node_div1 src/dorbslam_wo_extractor.cc)
+add_executable( dorbslam_node_div1 src/dorbslam_wo_extractor.cc
+../measurment_controller/src/measurmentManager.cpp )
+add_dependencies( dorbslam_node_div1 measurment_controller_generate_messages_cpp)
 
  ## Add cmake target dependencies of the executable
  ## same as for the library above
@@ -264,7 +283,10 @@ target_link_libraries(dorbslam_node_div1
 
 
 #add_executable(orbslam_node_div2 src/dorb_slam_div1.cc)
-add_executable(dorbslam_node_div2 src/dorbslam_node.cc)
+add_executable(dorbslam_node_div2 src/dorbslam_node.cc
+../measurment_controller/src/measurmentManager.cpp )
+add_dependencies( dorbslam_node_div2 measurment_controller_generate_messages_cpp)
+
  ## Add cmake target dependencies of the executable
  ## same as for the library above
 
@@ -281,14 +303,16 @@ target_link_libraries(dorbslam_node_div2
   ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
   )
 set_target_properties(dorbslam_node_div2 PROPERTIES COMPILE_DEFINITIONS "ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT=1")
-
+set_target_properties(dorbslam_node_div2 PROPERTIES COMPILE_DEFINITIONS "VALIDATION=1")
 
 #add_executable(orbslam_node_div2 src/dorb_slam_div1.cc)
-add_executable(dorbslam_node_div3 src/dorbslam_wo_extractor.cc)
+add_executable(dorbslam_node_div3 src/dorbslam_wo_extractor.cc
+../measurment_controller/src/measurmentManager.cpp )
  ## Add cmake target dependencies of the executable
  ## same as for the library above
 
 add_dependencies(dorbslam_node_div3 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies( dorbslam_node_div3 measurment_controller_generate_messages_cpp)
 
 
 target_link_libraries(dorbslam_node_div3
@@ -305,7 +329,10 @@ set_target_properties(dorbslam_node_div3 PROPERTIES COMPILE_DEFINITIONS "ENABLE_
 
 
 ## Declare a C++ executable
-add_executable(bundle_adjustment_node src/bundle_adjustment_node.cc)
+add_executable(bundle_adjustment_node src/bundle_adjustment_node.cc
+../measurment_controller/src/measurmentManager.cpp )
+add_dependencies( bundle_adjustment_node measurment_controller_generate_messages_cpp)
+
 target_link_libraries(bundle_adjustment_node
   ${catkin_LIBRARIES}
   ${PROJECT_NAME}
