@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+  <!-- camera version -->
+<launch>
+  <arg name="vocabulary"/>
+  <arg name="setting" />
+  <!-- Leg detection -->
+  <node name="dorbslam_node" pkg="dorbslam" type="dorbslam_node"
+    args="$(arg vocabulary) $(arg setting)" />
+</launch>

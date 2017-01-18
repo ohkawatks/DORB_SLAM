@@ -1,0 +1,7 @@
+<launch>
+	<node pkg="dataset_reader" type="kitti_reader_node" name="kitti_reader_node" 
+	  args="/home/ubuntu/dataset/kitti/dataset/sequences/00"
+	  output="screen">
+ 	</node>
+</launch>
+

@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+  <!-- camera version -->
+<launch>
+  <arg name="vocabulary"/>
+  <arg name="setting" />
+  <!-- Leg detection -->
+  <node name="bundle_adjustment" pkg="dorbslam" type="bundle_adjustment_node" 
+        output="screen" />
+</launch>

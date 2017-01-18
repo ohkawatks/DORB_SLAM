@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+
+<launch>
+	<arg name="vocabulary" default="/home/ubuntu/Utunomiya-university/catkin_ws20170119/src/DORB_SLAM/resources/voc/ORBvoc.txt" />
+  	<arg name="setting" default="/home/ubuntu/Utunomiya-university/catkin_ws20170119/src/DORB_SLAM/resources/settings/TUM1.yaml" />
+  	<arg name="div1" default="false" />
+  	<arg name="div3" default="false" />  
+		<arg name="normal" default="false" />
+  	<arg name="extractor" default="false" />  
+  	<arg name="bundle" default="false" />  
+  	
+  	<group if="$(arg extractor)">
+		<include file="$(find dorbslam)/launch/orb_extractor.launch">
+			<arg name="vocabulary" value="$( arg vocabulary )" />
+			<arg name="setting" value="$( arg setting )" />
+		</include>
+	</group>
+	<group if="$(arg div1)">
+		<include file="$(find dorbslam)/launch/dorbslam_div1.launch">
+				<arg name="vocabulary" value="$( arg vocabulary )" />
+				<arg name="setting" value="$( arg setting )" />
+		</include>
+	</group>
+	<group if="$(arg bundle)">
+			<include file="$(find dorbslam)/launch/bundle_adjustment.launch">
+				<arg name="vocabulary" value="$( arg vocabulary )" />
+				<arg name="setting" value="$( arg setting )" />
+			</include>
+	</group>
+	<group if="$(arg div3)">
+			<include file="$(find dorbslam)/launch/dorbslam_div3.launch">
+				<arg name="vocabulary" value="$( arg vocabulary )" />
+				<arg name="setting" value="$( arg setting )" />
+			</include>
+	</group>
+ 	<group if="$(arg normal)">
+		<include file="$(find dorbslam)/launch/dorbslam.launch">
+			<arg name="vocabulary" value="$( arg vocabulary )" />
+			<arg name="setting" value="$( arg setting )" />
+		</include>
+	</group>
+</launch>
+

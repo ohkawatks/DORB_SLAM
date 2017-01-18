@@ -1,0 +1,15 @@
+uint32 thread_id	
+uint32 type
+---
+string name
+uint32 status
+uint32 cycle
+uint32 cnt
+uint32 begin
+uint32 end
+float64 min
+float64 max
+float64[] mnid
+string[] starttime
+string[] endtime
+float64[] raw

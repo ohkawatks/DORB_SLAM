@@ -1,0 +1,7 @@
+<launch>
+	<node pkg="dataset_reader" type="tum_reader_node" name="tum_reader_node" 
+	  args="/home/ubuntu/Utunomiya-university/catkin_ws20170119/rgbd_dataset_freiburg1_xyz"
+	  output="screen">
+ 	</node>
+</launch>
+

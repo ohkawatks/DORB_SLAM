@@ -1,0 +1,7 @@
+<launch>
+	<arg name="controller_argument" default="" />
+	<node pkg="measurment_controller" type="measurment_server_node" name="measurment_server_node" output="screen">
+		<rosparam file="$(find measurment_controller)/config/config.yaml" command="load" />
+ 	</node>
+</launch>
+

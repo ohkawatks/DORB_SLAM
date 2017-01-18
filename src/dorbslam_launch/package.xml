@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package>
+  <name>dorbslam_launch</name>
+  <version>1.0.0</version>
+  <description>Package with general launches from drones ROS packages.</description>
+
+  <maintainer email="fjesus@todo.todo">fjesus</maintainer>
+
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <run_depend>rqt_plot</run_depend>
+
+  <export>
+  </export>
+</package>

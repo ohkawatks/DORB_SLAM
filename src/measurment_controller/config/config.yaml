@@ -1,0 +1,11 @@
+#測定情報を設定して下さい。
+path : /home/ubuntu/measurment/test4/none/kitti/ 
+
+monitor : {
+raw_out : 1,
+nodes : [ "tum_reader_node", "orb_extractor_node", "dorbslam_node_div3" ],
+srvs :  [ "measurment", "measurment", "measurment" ],
+thread : [ 0,1,2 ],
+type : [ 0, 1 ],
+}
+ 
