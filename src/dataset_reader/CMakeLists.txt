@@ -1,20 +1,29 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(dataset_reader)
 
+set(CMAKE_C_FLAGS "${CMAKE_C_fLAGS} -Wall -mfpu=neon -O3 -pthread -std=c++11")# -g -O0")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -mfpu=neon -O3 -pthread -std=c++11")# -g -O0")
+set(CMAKE_BUILD_TYPE Release)
+#if would you like to see performance,please comment out following line
+#add_definitions(-DENABLE_PERFORM)
+add_definitions("-DENABLE_NEON")
+
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 set(CMAKE_BUILD_TYPE Release)
 find_package(catkin REQUIRED COMPONENTS
+  cmake_modules
   roscpp
   sensor_msgs
   std_msgs
   image_transport
   cv_bridge
+  message_generation
 )
 find_package(OpenCV  REQUIRED)
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED COMPONENTS system)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -68,10 +77,11 @@ find_package(OpenCV  REQUIRED)
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
-# )
+ generate_messages(
+   DEPENDENCIES
+   std_msgs  # Or other packages containing msgs
+ )
+
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -107,7 +117,7 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES dataset_reader
 CATKIN_DEPENDS  roscpp   sensor_msgs  std_msgs  image_transport cv_bridge  
-DEPENDS opencv
+DEPENDS opencv message_generation 
 #  DEPENDS system_lib
 )
 
@@ -121,7 +131,7 @@ DEPENDS opencv
 include_directories(
   ${catkin_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
-)
+   ../measurment_controller/include )
 
 ## Declare a C++ library
 # add_library(dataset_reader
@@ -134,7 +144,10 @@ include_directories(
 # add_dependencies(dataset_reader ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
- add_executable(tum_reader_node src/tum_reader.cpp)
+ add_executable(tum_reader_node src/tum_reader.cpp 
+ ../measurment_controller/src/measurmentManager.cpp )
+add_dependencies( tum_reader_node measurment_controller_generate_messages_cpp)
+
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 add_dependencies(tum_reader_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
@@ -148,9 +161,11 @@ add_dependencies(tum_reader_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EX
 
 
 ## Declare a C++ executable
-add_executable(kitti_reader_node src/kitti_reader.cpp)
+add_executable(kitti_reader_node src/kitti_reader.cpp 
+../measurment_controller/src/measurmentManager.cpp )
 ## Add cmake target dependencies of the executable
 ## same as for the library above
+add_dependencies(kitti_reader_node measurment_controller_generate_messages_cpp)
 add_dependencies(kitti_reader_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 # Specify libraries to link a library or executable target against

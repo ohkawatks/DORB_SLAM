@@ -8,8 +8,16 @@
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/image_encodings.h>
+#ifdef ENABLE_PERFORM   
+#include "measurmentManager.h"
+#endif
 
 #define PUBLISH_TOPIC_NAME "/camera/image_raw"
+
+#ifdef ENABLE_PERFORM   
+measurmentManager *	g_measurmentServer;
+extern char* __progname;
+#endif
 
 using namespace std;
 
@@ -43,12 +51,21 @@ public:
 
     // Main loop
     cv::Mat im;
+    double stamp = 0.0;
     ros::Time begin = ros::Time::now();
+
+#ifdef ENABLE_PERFORM   
+	 g_measurmentServer->processThroughputEntry(0,0,"dataset_reader::main");	
+#endif
 
     for(int cnt = 0; cnt < nImages;cnt++){
       if (!ros::ok())
         break;
+      stamp = 0;
 
+#ifdef ENABLE_PERFORM   
+  	   g_measurmentServer->processThroughputThreadStart(0,0,stamp);	
+#endif
 
       // Read image from file
       im = cv::imread(dataPath_+"/"+vstrImageFilenames[cnt],CV_LOAD_IMAGE_UNCHANGED);
@@ -57,18 +74,31 @@ public:
         cerr << endl << "Failed to load image at: " << vstrImageFilenames[cnt] << endl;
           return 1;
       }
-      publish(cnt, im); 
-     ROS_INFO("Frame %d[%f] published.", cnt,  vTimestamps[cnt]);
+      stamp = publish(cnt, im); 
+#ifdef ENABLE_PERFORM   
+      g_measurmentServer->processThroughputThreadEnd(0,0,stamp);	
+#endif
+
+      ROS_INFO("Frame %d[%f] published.", cnt,  vTimestamps[cnt]);
       ros::spinOnce();
 
-      ros::Duration sleeptime = ros::Duration(vTimestamps[cnt+1]) 
-        - (ros::Time::now() - begin);
+#ifdef ENABLE_PERFORM   
+		ros::Duration(0.1).sleep();
+#else
+		ros::Duration sleeptime = ros::Duration(vTimestamps[cnt+1]) 
+			- (ros::Time::now() - begin);
 
-      //ROS_INFO("sleeptime:%f", sleeptime.toSec());
-      if (sleeptime.toSec() > 0)
-        sleeptime.sleep();
-
+		if (sleeptime.toSec() > 0)
+ 			sleeptime.sleep();
+#endif
     }
+
+#ifdef ENABLE_PERFORM   
+	while ( ros::ok() ){
+		ros::spinOnce();
+	}   
+	g_measurmentServer->processThroughputDelete(0,0);	
+#endif
 
     return 0;
   }
@@ -86,7 +116,7 @@ private:
                           vector<double>& vTimestamps
                           )=0; 
 
-  void publish(int counter, const cv::Mat img){
+  double publish(int counter, const cv::Mat img){
     cv_bridge::CvImage img_bridge;
     sensor_msgs::Image img_msg;
     std_msgs::Header header;
@@ -102,6 +132,7 @@ private:
       img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::RGBA8, img);   
     img_bridge.toImageMsg(img_msg);
     pub_img_.publish(img_msg); 
+	return header.stamp.toSec();
   }
 };
 

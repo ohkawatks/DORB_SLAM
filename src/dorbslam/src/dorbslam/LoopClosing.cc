@@ -31,6 +31,14 @@
 #include<mutex>
 #include<thread>
 
+#ifdef ENABLE_PERFORM   
+#include "measurmentManager.h"
+#endif
+
+#ifdef ENABLE_PERFORM   
+extern measurmentManager *	g_measurmentServer;
+extern char* __progname;
+#endif
 
 namespace ORB_SLAM2
 {
@@ -58,12 +66,18 @@ void LoopClosing::SetLocalMapper(LocalMapping *pLocalMapper)
 void LoopClosing::Run()
 {
     mbFinished =false;
+#ifdef ENABLE_PERFORM   
+    g_measurmentServer->processThroughputEntry(2,0,"LoopClosing::Run");	
+#endif
 
     while(1)
     {
         // Check if there are keyframes in the queue
         if(CheckNewKeyFrames())
         {
+#ifdef ENABLE_PERFORM   
+		    g_measurmentServer->processThroughputThreadStart(2,0,0);	
+#endif
             // Detect loop candidates and check covisibility consistency
             if(DetectLoop())
             {
@@ -75,16 +89,22 @@ void LoopClosing::Run()
                    CorrectLoop();
                }
             }
+#ifdef ENABLE_PERFORM   
+            g_measurmentServer->processThroughputThreadEnd(2,0,mpCurrentKF->mTimeStamp);	
+#endif
         }       
 
         ResetIfRequested();
 
         if(CheckFinish())
             break;
-
+	
         usleep(5000);
     }
-
+#ifdef ENABLE_PERFORM   
+    g_measurmentServer->processThroughputDelete(2,0);
+#endif
+    
     SetFinish();
 }
 

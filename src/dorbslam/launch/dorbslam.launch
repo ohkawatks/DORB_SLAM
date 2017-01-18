@@ -4,7 +4,6 @@
   <arg name="vocabulary"/>
   <arg name="setting" />
   <!-- Leg detection -->
-  <node name="dorbslam_div2" pkg="dorbslam" type="dorbslam_node_div2"
-    args="$(arg vocabulary) $(arg setting)" output="screen"  />
-
+  <node name="dorbslam_node" pkg="dorbslam" type="dorbslam_node"
+    args="$(arg vocabulary) $(arg setting)" />
 </launch>

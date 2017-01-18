@@ -1,0 +1,7 @@
+<launch>
+	<node pkg="dataset_reader" type="tum_reader_node" name="tum_reader_node" 
+	  args="/home/ubuntu/dataset/rgbd_dataset_freiburg2_large_with_loop"
+	  output="screen">
+ 	</node>
+</launch>
+

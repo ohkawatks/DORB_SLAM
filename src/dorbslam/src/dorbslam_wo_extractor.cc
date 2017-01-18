@@ -28,10 +28,21 @@
 #include <cv_bridge/cv_bridge.h>
 #include "dorbslam/OrbDescriptor.h"
 #include "dorbslam/KeyPoint.h"
+#include "dorbslam/TrackingState.h"
 #include "std_msgs/Int32.h"
 #include<opencv2/core/core.hpp>
 
 #include"System.h"
+#ifdef ENABLE_PERFORM
+#include "measurmentManager.h"
+#endif
+
+#ifdef ENABLE_PERFORM
+extern measurmentManager *	g_measurmentServer;
+extern char* __progname;
+#endif
+
+
 #define DESCRIPTOR_TOPIC_NAME ("/orb_descriptor")
 #define STATE_TOPIC_NAME ("/tracker_state")
 using namespace std;
@@ -42,7 +53,7 @@ public:
   ImageGrabber(ORB_SLAM2::System* pSLAM,
                ros::NodeHandle nh
                ):mpSLAM(pSLAM),
-                 mpub(nh.advertise<std_msgs::Int32>(STATE_TOPIC_NAME, 1000))
+                 mpub(nh.advertise<dorbslam::TrackingState>(STATE_TOPIC_NAME, 1000))
   {}
   
 
@@ -57,6 +68,10 @@ private:
 
 int main(int argc, char **argv)
 {
+#ifdef ENABLE_PERFORM   
+   unsigned char measument_path[256];
+#endif       
+
     ros::init(argc, argv, "Mono");
     ros::start();
 
@@ -65,14 +80,23 @@ int main(int argc, char **argv)
         cerr << endl << "Usage: rosrun ORB_SLAM2 Mono path_to_vocabulary path_to_settings" << endl;        
         ros::shutdown();
         return 1;
-    }    
-
+    } 
+#ifdef ENABLE_PERFORM   
+    g_measurmentServer = new measurmentManager();
+	memset( (char*)measument_path,0x00, sizeof(measument_path));
+	sprintf( (char*)measument_path,"/%s/measurment",__progname);
+#endif       
+    
     // Create SLAM system. 
     // It initializes all system threads and gets ready to process frames.
+    ros::NodeHandle nodeHandler;
+#ifdef ENABLE_PERFORM   
+    ros::ServiceServer server = nodeHandler.advertiseService( (char*)measument_path, 
+																						&measurmentManager::service, g_measurmentServer);
+#endif       
 
     ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::MONOCULAR,true);
 
-    ros::NodeHandle nodeHandler;
     ImageGrabber igb(&SLAM, nodeHandler);
 
 
@@ -82,7 +106,14 @@ int main(int argc, char **argv)
     ros::Subscriber sub = nodeHandler.subscribe(DESCRIPTOR_TOPIC_NAME,
                                                 1,
                                                 &ImageGrabber::GrabDescriptor,&igb);
-    ros::spin();
+#ifdef ENABLE_PERFORM   
+  	g_measurmentServer->processThroughputEntry(0,0,"ImageGrabber::GrabDescriptor");	
+  	g_measurmentServer->processThroughputEntry(0,1,"ImageGrabber::GrabImage");	
+#endif       
+
+	while ( ros::ok() ){
+		ros::spinOnce();
+	}   
 
     // Stop all threads
     SLAM.Shutdown();
@@ -102,6 +133,10 @@ int main(int argc, char **argv)
 
     SLAM.SaveKeyFrameTrajectoryTUM(fname);
 
+#ifdef ENABLE_PERFORM   
+    g_measurmentServer->processThroughputDelete(0,0);	
+    g_measurmentServer->processThroughputDelete(0,1);	
+#endif
     ros::shutdown();
 
     return 0;
@@ -109,13 +144,24 @@ int main(int argc, char **argv)
 
 void ImageGrabber::GrabDescriptor(const dorbslam::OrbDescriptorConstPtr& msg)
 {
+	dorbslam::TrackingState tracking_state;
+#ifdef ENABLE_PERFORM
+	g_measurmentServer->processThroughputThreadStart(0,0,msg->header.stamp.toSec());
+#endif
+
     // Copy the ros image message to cv::Mat.
     mpSLAM->TrackMonocular(msg->KeyPoints, 
                            msg->Settings,
                            msg->header.stamp.toSec()
                            );
+
     int state = mpSLAM->getTrackerState();
-    mpub.publish(state);
+	tracking_state.header = msg->header;
+	tracking_state.data = state;    
+	mpub.publish(tracking_state);
+#ifdef ENABLE_PERFORM
+	g_measurmentServer->processThroughputThreadEnd(0,0,msg->header.stamp.toSec());
+#endif
 
 }
 
@@ -124,6 +170,10 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
 {
     // Copy the ros image message to cv::Mat.
     cv_bridge::CvImageConstPtr cv_ptr;
+#ifdef ENABLE_PERFORM
+	g_measurmentServer->processThroughputThreadStart(0,1,msg->header.stamp.toSec());
+#endif
+
     try
     {
         cv_ptr = cv_bridge::toCvShare(msg);
@@ -135,5 +185,9 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
     }
 
     mpSLAM->TrackMonocular(cv_ptr->image,cv_ptr->header.stamp.toSec());
+
+#ifdef ENABLE_PERFORM
+	g_measurmentServer->processThroughputThreadEnd(0,1,msg->header.stamp.toSec());
+#endif
 }
 

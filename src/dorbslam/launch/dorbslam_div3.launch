@@ -4,12 +4,6 @@
   <arg name="vocabulary"/>
   <arg name="setting" />
   <!-- Leg detection -->
-  <node name="bundle_adjustment" pkg="dorbslam" type="bundle_adjustment_node" 
-        output="screen" />
-
-  <node name="orb_extractor_node" pkg="dorbslam" type="orb_extractor_node"
-    args="$(arg vocabulary) $(arg setting)" />
-
   <node name="dorb_slam_div3" pkg="dorbslam" type="dorbslam_node_div3"
     args="$(arg vocabulary) $(arg setting)" output="screen"  />
 

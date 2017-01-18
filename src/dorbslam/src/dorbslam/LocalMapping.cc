@@ -25,6 +25,17 @@
 
 #include<mutex>
 
+#ifdef ENABLE_PERFORM   
+#include "measurmentManager.h"
+#endif
+
+#ifdef ENABLE_PERFORM   
+extern measurmentManager *	g_measurmentServer;
+extern char* __progname;
+
+int g_localmapping_flag = 0;
+#endif
+
 namespace ORB_SLAM2
 {
 
@@ -49,6 +60,13 @@ void LocalMapping::Run()
 
     mbFinished = false;
 
+#ifdef ENABLE_PERFORM   
+    if( g_localmapping_flag == 0 ){
+    	g_measurmentServer->processThroughputEntry(1,0,"LocalMapping::Run");	
+		g_localmapping_flag = 1;
+    }
+#endif
+ 
     while(1)
     {
         // Tracking will see that Local Mapping is busy
@@ -57,6 +75,9 @@ void LocalMapping::Run()
         // Check if there are keyframes in the queue
         if(CheckNewKeyFrames())
         {
+#ifdef ENABLE_PERFORM   
+		   	 g_measurmentServer->processThroughputThreadStart(1,0,0);	
+#endif
             // BoW conversion and insertion in Map
             ProcessNewKeyFrame();
 
@@ -100,6 +121,9 @@ void LocalMapping::Run()
             }
 
             mpLoopCloser->InsertKeyFrame(mpCurrentKeyFrame);
+#ifdef ENABLE_PERFORM   
+         	g_measurmentServer->processThroughputThreadEnd(1,0,mpCurrentKeyFrame->mTimeStamp);	
+ #endif
         }
         else if(Stop())
         {
@@ -122,6 +146,10 @@ void LocalMapping::Run()
 
         usleep(3000);
     }
+
+#ifdef ENABLE_PERFORM   
+    g_measurmentServer->processThroughputDelete(1,0);	
+#endif
 
     SetFinish();
 }
