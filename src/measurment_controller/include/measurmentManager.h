@@ -35,7 +35,7 @@
 /* @def D_MEASURMENT_RAW_MAX
  * @brief 測定結果の生値を定義する
  */
-#define D_MEASURMENT_RAW_MAX (6024)
+#define D_MEASURMENT_RAW_MAX (6192)
 
  /* @def D_THREAD_ID_MAX 
  * @brief  スレッドIDの最大値

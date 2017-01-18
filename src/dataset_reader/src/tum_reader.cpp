@@ -73,7 +73,6 @@ int main(int argc, char **argv)
   g_measurmentServer = new measurmentManager();
   memset( (char*)measument_path,0x00, sizeof(measument_path)); 
   sprintf( (char*)measument_path,"/%s/measurment",__progname);
-  ROS_ERROR("%s",measument_path);
 #endif
 
   ros::NodeHandle nodeHandler;
