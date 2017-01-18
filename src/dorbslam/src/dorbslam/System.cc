@@ -25,6 +25,13 @@
 #include <thread>
 #include <pangolin/pangolin.h>
 #include <iomanip>
+#ifdef ENABLE_PERFORM   
+#include "measurmentManager.h"
+#endif
+
+#ifdef ENABLE_PERFORM   
+measurmentManager *	g_measurmentServer;
+#endif
 
 namespace ORB_SLAM2
 {

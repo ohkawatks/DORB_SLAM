@@ -1,5 +1,13 @@
 #include "dataset_reader_node.cpp"
 #include<iomanip>
+#ifdef ENABLE_PERFORM
+#include "measurmentManager.h"
+#endif
+
+#ifdef ENABLE_PERFORM
+extern measurmentManager *	g_measurmentServer;
+extern char* __progname;
+#endif
 
 //const string &dataPath,
 class TumReader:  public DatasetReader{
@@ -45,6 +53,9 @@ class TumReader:  public DatasetReader{
 
 int main(int argc, char **argv)
 {
+#ifdef ENABLE_PERFORM
+   unsigned char measument_path[256];
+#endif
 
   if(argc < 2)
     {
@@ -55,6 +66,21 @@ int main(int argc, char **argv)
   std::string data_path(argv[1]);
   printf("data path: %s.\n", data_path.c_str()) ;
   ros::init(argc, argv, "tum_reader");
+#ifdef ENABLE_PERFORM
+   g_measurmentServer = new measurmentManager();
+#endif
+
+#ifdef ENABLE_PERFORM
+  memset( (char*)measument_path,0x00, sizeof(measument_path)); 
+  sprintf( (char*)measument_path,"/%s/measurment",__progname);
+#endif
+
+  ros::NodeHandle nodeHandler;
+#ifdef ENABLE_PERFORM
+  ros::ServiceServer server = nodeHandler.advertiseService( (char*)measument_path, 
+																					&measurmentManager::service, g_measurmentServer);
+#endif
+
   TumReader tum_reader;
   tum_reader.run(data_path);
   return 0;

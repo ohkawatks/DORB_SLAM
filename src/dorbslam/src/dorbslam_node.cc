@@ -30,7 +30,15 @@
 #include<opencv2/core/core.hpp>
 
 #include"System.h"
+#ifdef ENABLE_PERFORM   
+#include "measurmentManager.h"
+#endif
 
+#ifdef ENABLE_PERFORM   
+extern measurmentManager *	g_measurmentServer;
+extern char* __progname;
+#endif
+	
 using namespace std;
 
 class ImageGrabber
@@ -45,6 +53,10 @@ public:
 
 int main(int argc, char **argv)
 {
+#ifdef ENABLE_PERFORM   
+    unsigned char measument_path[256];
+#endif
+
     ros::init(argc, argv, "Mono");
     ros::start();
 
@@ -54,16 +66,36 @@ int main(int argc, char **argv)
         ros::shutdown();
         return 1;
     }    
+    ros::NodeHandle nodeHandler;
+
+#ifdef ENABLE_PERFORM   
+    g_measurmentServer = new measurmentManager();
+        
+	memset( (char*)measument_path,0x00, sizeof(measument_path));
+	sprintf( (char*)measument_path,"/%s/measurment",__progname);
+
+    ros::ServiceServer server = nodeHandler.advertiseService( (char*)measument_path, 
+																					&measurmentManager::service, g_measurmentServer);
+#endif
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::MONOCULAR,true);
 
     ImageGrabber igb(&SLAM);
 
-    ros::NodeHandle nodeHandler;
     ros::Subscriber sub = nodeHandler.subscribe("/camera/image_raw", 1, &ImageGrabber::GrabImage,&igb);
 
-    ros::spin();
+#ifdef ENABLE_PERFORM   
+  	g_measurmentServer->processThroughputEntry(0,0,"ImageGrabber::GrabDescriptor");	
+#endif
+
+	while ( ros::ok() ){
+		ros::spinOnce();
+	}   
+
+#ifdef ENABLE_PERFORM   
+  	g_measurmentServer->processThroughputDelete(0,0);	
+#endif
 
     // Stop all threads
     SLAM.Shutdown();
@@ -89,6 +121,11 @@ int main(int argc, char **argv)
 
 void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
 {
+
+#ifdef ENABLE_PERFORM   
+	g_measurmentServer->processThroughputThreadStart(0,0,msg->header.stamp.toSec());
+#endif
+
     // Copy the ros image message to cv::Mat.
     cv_bridge::CvImageConstPtr cv_ptr;
     try
@@ -100,8 +137,11 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
         ROS_ERROR("cv_bridge exception: %s", e.what());
         return;
     }
-
     mpSLAM->TrackMonocular(cv_ptr->image,cv_ptr->header.stamp.toSec());
+
+#ifdef ENABLE_PERFORM   
+	g_measurmentServer->processThroughputThreadEnd(0,0,msg->header.stamp.toSec());
+#endif
 }
 
 

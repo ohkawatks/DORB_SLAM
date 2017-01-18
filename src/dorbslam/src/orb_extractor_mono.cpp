@@ -32,12 +32,22 @@
 #include "System.h"
 #include "dorbslam/OrbDescriptor.h"
 #include "dorbslam/KeyPoint.h"
+#include "dorbslam/TrackingState.h"
 #include "std_msgs/Int32.h"
+
+#ifdef ENABLE_PERFORM   	
+#include "measurmentManager.h"
+#endif
+
 #define IMAGE_TOPIC ("/camera/image_raw")
 #define PUBLISH_TOPIC_NAME ("/orb_descriptor")
 #define STATE_TOPIC ("/tracker_state")
 using namespace std;
 
+#ifdef ENABLE_PERFORM   	
+extern measurmentManager *	g_measurmentServer;
+extern char* __progname;
+#endif
 
 class ImageGrabber
 {
@@ -61,7 +71,7 @@ public:
 
   }
   void GrabImage(const sensor_msgs::ImageConstPtr& msg);
-  void GrabState(const std_msgs::Int32ConstPtr& msg);
+  void GrabState(const dorbslam::TrackingStateConstPtr& msg);
 private:
   //ORB_SLAM2::System* mpSLAM;
   int mbRGB;
@@ -75,6 +85,10 @@ private:
 
 int main(int argc, char **argv)
 {
+ #ifdef ENABLE_PERFORM   
+	unsigned char measument_path[256];
+#endif
+
     ros::init(argc, argv, "orb_extractor");
     ros::start();
 
@@ -84,6 +98,22 @@ int main(int argc, char **argv)
         ros::shutdown();
         return 1;
     }    
+
+#ifdef ENABLE_PERFORM   
+    g_measurmentServer = new measurmentManager();
+  	g_measurmentServer->processThroughputEntry(0,0,"ImageGrabber::GrabImage");	
+  	g_measurmentServer->processThroughputEntry(0,1,"ImageGrabber::GrabState");	
+    
+    memset( (char*)measument_path,0x00, sizeof(measument_path));
+	sprintf( (char*)measument_path,"/%s/measurment",__progname);
+#endif
+
+    ros::NodeHandle nodeHandler;
+
+#ifdef ENABLE_PERFORM   
+    ros::ServiceServer server = nodeHandler.advertiseService( (char*)measument_path, 
+																					&measurmentManager::service, g_measurmentServer);
+#endif
 
     cv::FileStorage fSettings(argv[2], cv::FileStorage::READ);
     if (!fSettings.isOpened()) {
@@ -96,12 +126,19 @@ int main(int argc, char **argv)
     int fIniThFAST = fSettings["ORBextractor.iniThFAST"];
     int fMinThFAST = fSettings["ORBextractor.minThFAST"];
     
-    ros::NodeHandle nodeHandler;
     int nRGB = fSettings["Camera.RGB"];
     ImageGrabber igb(nodeHandler, nRGB, nFeatures, fScaleFactor, nLevels, fIniThFAST, fMinThFAST);//&SLAM);
 
     ros::Subscriber sub = nodeHandler.subscribe(IMAGE_TOPIC, 1, &ImageGrabber::GrabImage,&igb);
-    ros::spin();
+
+	while ( ros::ok() ){
+		ros::spinOnce();
+	}   
+
+#ifdef ENABLE_PERFORM   
+  	g_measurmentServer->processThroughputDelete(0,0);	
+  	g_measurmentServer->processThroughputDelete(0,1);	
+#endif
 
     // Save camera trajectory
     ros::shutdown();
@@ -112,6 +149,10 @@ int main(int argc, char **argv)
 void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
 {
 
+#ifdef ENABLE_PERFORM   
+  	g_measurmentServer->processThroughputThreadStart(0,0,msg->header.stamp.toSec());	
+#endif
+	
     // Copy the ros image message to cv::Mat.
     cv_bridge::CvImageConstPtr cv_ptr;
     try
@@ -187,10 +228,24 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
     desc.Settings.ImageRows = img.rows;
     desc.header = cv_ptr->header;
     mpub.publish(desc);
-    ////////////////////
+
+#ifdef ENABLE_PERFORM   
+   	g_measurmentServer->processThroughputThreadEnd(0,0,msg->header.stamp.toSec());	
+#endif
+  ////////////////////
     //mpSLAM->TrackMonocular(cv_ptr->image,cv_ptr->header.stamp.toSec());
 }
 
-void ImageGrabber::GrabState(const std_msgs::Int32ConstPtr& msg){
-  this->mTrackerState = msg->data;
+void ImageGrabber::GrabState(const dorbslam::TrackingStateConstPtr& msg){
+
+#ifdef ENABLE_PERFORM   
+ 	g_measurmentServer->processThroughputThreadStart(0,1,msg->header.stamp.toSec());
+#endif 
+
+	this->mTrackerState = msg->data;
+ 
+#ifdef ENABLE_PERFORM   
+	g_measurmentServer->processThroughputThreadEnd(0,1,msg->header.stamp.toSec());
+#endif 
+
 }
