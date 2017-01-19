@@ -140,7 +140,7 @@ If you'd like to disable gui, define "_\_DISABLE_GUI" deffinition flag in the CM
 #5 Enable Performance Mode
 We provide ros-service to see DORBSLAM performance.
 
-If you'd like to see performance in DORBSLAM,define "ENABLE_PERFORMENCE" deffinition flag in th CMakefile
+If you'd like to see performance in DORBSLAM,define "ENABLE_PERFORMENCE" deffinition flag in the CMakefile
 
 - For the dataset_reader, add following line to dataset_reader/CMakeLists.txt
 
