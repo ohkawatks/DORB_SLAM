@@ -144,9 +144,10 @@ If you'd like to see performance in DORBSLAM,define "ENABLE_PERFORMENCE" deffini
 
 - For the dataset_reader, add following line to dataset_reader/CMakeLists.txt
 
-    add_definitions(-DENABLE_PERFORM)
+        add_definitions(-DENABLE_PERFORM)
 
 - For the div1 and div2, div3, add following line to  the dorbslam/CMakeLists.txt
 
-    add_definitions(-DENABLE_PERFORM)
+        add_definitions(-DENABLE_PERFORM)
+ 
  
