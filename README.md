@@ -137,3 +137,17 @@ If you'd like to disable gui, define "_\_DISABLE_GUI" deffinition flag in the CM
     
         target_compile_definitions(${PROJECT_NAME}_div2 PUBLIC ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT=1 PUBLIC__DISABLE_GUI=1)
 
+#5 Enable Performance Mode
+We provide ros-service to see DORBSLAM performance.
+
+If you'd like to see performance in DORBSLAM,define "ENABLE_PERFORMENCE" deffinition flag in the CMakefile
+
+- For the dataset_reader, add following line to dataset_reader/CMakeLists.txt
+
+        add_definitions(-DENABLE_PERFORM)
+
+- For the div1 and div2, div3, add following line to  the dorbslam/CMakeLists.txt
+
+        add_definitions(-DENABLE_PERFORM)
+ 
+ 
