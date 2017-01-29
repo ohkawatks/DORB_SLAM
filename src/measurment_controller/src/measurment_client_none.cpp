@@ -324,56 +324,41 @@ int collect_all(  double *procTimeArray, unsigned long rows){
 		collect_proctime_all( &g_all_procTime_max[1], &g_all_procTime_min[1],&g_all_procTime_sum[1],
 											 &g_all_procTime_avg[1], &g_all_procTime_cnt[1], &procTimeArray_wk[1] );
 
-		/* image_raw購読〜orb_descriptor配信まで */
+		/* image_raw購読〜Trackingまで */
 		collect_proctime_all( &g_all_procTime_max[2], &g_all_procTime_min[2],&g_all_procTime_sum[2],
 											 &g_all_procTime_avg[2], &g_all_procTime_cnt[2], &procTimeArray_wk[2] );
 
-		/* orb_descriptor通信時間 */		
+		/* LocalMapping待ち時間 */
 		collect_proctime_all( &g_all_procTime_max[3], &g_all_procTime_min[3],&g_all_procTime_sum[3],
 											 &g_all_procTime_avg[3], &g_all_procTime_cnt[3], &procTimeArray_wk[3] );
 
-		/* orb_descriptor購読〜tracker_state配信まで(Tracking処理時間) */
+		/* LocalMapping処理時間*/
 		collect_proctime_all( &g_all_procTime_max[4], &g_all_procTime_min[4],&g_all_procTime_sum[4],
 											 &g_all_procTime_avg[4], &g_all_procTime_cnt[4], &procTimeArray_wk[4] );
 
-		//! tracker_state通信時間
+		/* LoopClosing待ち時間 */
 		collect_proctime_all( &g_all_procTime_max[5], &g_all_procTime_min[5],&g_all_procTime_sum[5],
 											 &g_all_procTime_avg[5], &g_all_procTime_cnt[5], &procTimeArray_wk[5] );
 
-		//! tracker_state処理時間
+		/* LoopClosing処理時間 */
 		collect_proctime_all( &g_all_procTime_max[6], &g_all_procTime_min[6],&g_all_procTime_sum[6],
 											 &g_all_procTime_avg[6], &g_all_procTime_cnt[6], &procTimeArray_wk[6] );
-		/* LocalMapping待ち時間 */
+
+		/* image_raw取得〜trackingまでの遅延時間 */
 		collect_proctime_all( &g_all_procTime_max[7], &g_all_procTime_min[7],&g_all_procTime_sum[7],
 											 &g_all_procTime_avg[7], &g_all_procTime_cnt[7], &procTimeArray_wk[7] );
 
-		/* LocalMapping処理時間*/
+		/* image_raw取得〜trackingまでの遅延時間+LocalMapping遅延時間 */
 		collect_proctime_all( &g_all_procTime_max[8], &g_all_procTime_min[8],&g_all_procTime_sum[8],
 											 &g_all_procTime_avg[8], &g_all_procTime_cnt[8], &procTimeArray_wk[8] );
-
-		/* LoopClosing待ち時間 */
+											 
+		/* image_raw取得〜trackingまでの遅延時間+LocalMapping遅延時間+LoopClosing遅延時間 */
 		collect_proctime_all( &g_all_procTime_max[9], &g_all_procTime_min[9],&g_all_procTime_sum[9],
 											 &g_all_procTime_avg[9], &g_all_procTime_cnt[9], &procTimeArray_wk[9] );
 
-		/* LoopClosing処理時間 */
+		/* 1フレーム当たりの遅延 */
 		collect_proctime_all( &g_all_procTime_max[10], &g_all_procTime_min[10],&g_all_procTime_sum[10],
 											 &g_all_procTime_avg[10], &g_all_procTime_cnt[10], &procTimeArray_wk[10] );
-
-		/* image_raw取得〜trackingまでの遅延時間 */
-		collect_proctime_all( &g_all_procTime_max[11], &g_all_procTime_min[11],&g_all_procTime_sum[11],
-											 &g_all_procTime_avg[11], &g_all_procTime_cnt[11], &procTimeArray_wk[11] );
-
-		/* image_raw取得〜trackingまでの遅延時間+LocalMapping遅延時間 */
-		collect_proctime_all( &g_all_procTime_max[12], &g_all_procTime_min[12],&g_all_procTime_sum[12],
-											 &g_all_procTime_avg[12], &g_all_procTime_cnt[12], &procTimeArray_wk[12] );
-											 
-		/* image_raw取得〜trackingまでの遅延時間+LocalMapping遅延時間+LoopClosing遅延時間 */
-		collect_proctime_all( &g_all_procTime_max[13], &g_all_procTime_min[13],&g_all_procTime_sum[13],
-											 &g_all_procTime_avg[13], &g_all_procTime_cnt[13], &procTimeArray_wk[13] );
-
-		/* 1フレーム当たりの遅延 */
-		collect_proctime_all( &g_all_procTime_max[14], &g_all_procTime_min[14],&g_all_procTime_sum[14],
-											 &g_all_procTime_avg[14], &g_all_procTime_cnt[14], &procTimeArray_wk[14] );
 		
 		procTimeArray_wk+=32;
 	}
@@ -421,7 +406,7 @@ int collect( long *timeArray, double *procTimeArray,unsigned char *rowInfoStr){
 		procTimeArray[1] = -1.0;
 	}
 
-	//!  image_raw購読〜 orb_descriptor配信まで	
+	//!  image_raw購読〜 Trackingまで	
 	if( ( timeArray[2] != -1 ) && ( timeArray[3] != -1 ) ){  
 		if( timeArray[2] > timeArray[3] ){
 			procTimeArray[2]  = (timeArray[2] - timeArray[3])  / 1000.0;
@@ -433,106 +418,55 @@ int collect( long *timeArray, double *procTimeArray,unsigned char *rowInfoStr){
 		procTimeArray[2] = -1.0;
 		g_image_raw_lost++;
 	}
-	
-	//! orb_descriptor通信時間 
-	if( ( timeArray[3] != -1 ) && ( timeArray[6] != -1 ) ){  
-		if( timeArray[3] > timeArray[6] ){
-			procTimeArray[3]  = (timeArray[3] - timeArray[6])  / 1000.0;
-		}else{
-			procTimeArray[3] = (timeArray[6] - timeArray[3])  / 1000.0;
-		}
-		calc_proctime_all( &g_all_proctime, &g_all_proctime_max, &g_all_proctime_min, timeArray[3], timeArray[6] );
-	}else{
-		procTimeArray[3] = -1.0;
-	}		
-
-	//! orb_descriptor購読〜tracker_state配信まで(Tracking処理時間)
-	if( ( timeArray[6] != -1 ) && ( timeArray[7] != -1 ) ){  
-		if( timeArray[6] > timeArray[7] ){
-			procTimeArray[4]  = (timeArray[6] - timeArray[7])  / 1000.0;
-		}else{
-			procTimeArray[4] = (timeArray[7] - timeArray[6])  / 1000.0;
-		}
-		calc_proctime_all( &g_all_proctime, &g_all_proctime_max, &g_all_proctime_min, timeArray[6], timeArray[7] );
-	}else{
-		procTimeArray[4] = -1.0;
-		g_orb_descriptor_lost++;
-	}
-
-	//! tracker_state通信時間
-	if( ( timeArray[4] != -1 ) && ( timeArray[7] != -1 ) ){  
-		if( timeArray[4] > timeArray[7] ){
-			procTimeArray[5]  = (timeArray[4] - timeArray[7])  / 1000.0;
-		}else{
-			procTimeArray[5] = (timeArray[7] - timeArray[4])  / 1000.0;
-		}
-		calc_proctime_all( &g_all_proctime, &g_all_proctime_max, &g_all_proctime_min, timeArray[4], timeArray[7] );
-	}else{
-		procTimeArray[5] = -1.0;
-	}
-		
-	//! tracker_state処理時間
-	if( ( timeArray[4] != -1 ) && ( timeArray[5] != -1 ) ){  
-		if( timeArray[4] > timeArray[5] ){
-			procTimeArray[6]  = (timeArray[4] - timeArray[5])  / 1000.0;
-		}else{
-			procTimeArray[6] = (timeArray[5] - timeArray[4])  / 1000.0;
-		}
-		calc_proctime_all( &g_all_proctime, &g_all_proctime_max, &g_all_proctime_min, timeArray[4], timeArray[5] );
- 	}else{
-		procTimeArray[6] = -1.0;
-		g_tracker_state_lost++;
-	}
-		
 	//!  LocalMapping待ち時間
-	if( ( timeArray[7] != -1 ) && ( timeArray[8] != -1 ) ){  
-		if( timeArray[7] > timeArray[8] ){
-			procTimeArray[7]  = (timeArray[7] - timeArray[8])  / 1000.0;
+	if( ( timeArray[3] != -1 ) && ( timeArray[4] != -1 ) ){  
+		if( timeArray[3] > timeArray[4] ){
+			procTimeArray[3]  = (timeArray[3] - timeArray[4])  / 1000.0;
 		}else{
-			procTimeArray[7] = (timeArray[8] - timeArray[7])  / 1000.0;
+			procTimeArray[3] = (timeArray[4] - timeArray[3])  / 1000.0;
 		}
-		calc_proctime_all( &g_all_proctime, &g_all_proctime_max, &g_all_proctime_min, timeArray[7], timeArray[8] );
+		calc_proctime_all( &g_all_proctime, &g_all_proctime_max, &g_all_proctime_min, timeArray[3], timeArray[4] );
  	}else{
-		procTimeArray[7] = -1.0;
+		procTimeArray[3] = -1.0;
 	}
 	
 	//! LocalMapping処理時間
-	if( ( timeArray[8] != -1 ) && ( timeArray[9] != -1 ) ){  
-		if( timeArray[8] > timeArray[9] ){
-			procTimeArray[8]  = (timeArray[8] - timeArray[9])  / 1000.0;
+	if( ( timeArray[4] != -1 ) && ( timeArray[5] != -1 ) ){  
+		if( timeArray[4] > timeArray[5] ){
+			procTimeArray[4]  = (timeArray[4] - timeArray[5])  / 1000.0;
 		}else{
-			procTimeArray[8] = (timeArray[9] - timeArray[8])  / 1000.0;
+			procTimeArray[4] = (timeArray[5] - timeArray[4])  / 1000.0;
 		}
-		calc_proctime_all( &g_all_proctime, &g_all_proctime_max, &g_all_proctime_min, timeArray[8], timeArray[9] );
+		calc_proctime_all( &g_all_proctime, &g_all_proctime_max, &g_all_proctime_min, timeArray[4], timeArray[5] );
 	}else{
-		procTimeArray[8] = -1.0;
+		procTimeArray[4] = -1.0;
 		g_localmapping_lost++;
 	}
 	
 	//! LoopClosing待ち時間
-	if( ( timeArray[9] != -1 ) && ( timeArray[10] != -1 ) ){  
-		if( timeArray[9] > timeArray[10] ){
-			procTimeArray[9]  = (timeArray[9] - timeArray[10])  / 1000.0;
+	if( ( timeArray[5] != -1 ) && ( timeArray[6] != -1 ) ){  
+		if( timeArray[5] > timeArray[6] ){
+			procTimeArray[5]  = (timeArray[5] - timeArray[6])  / 1000.0;
 		}else{
-			procTimeArray[9] = (timeArray[10] - timeArray[9])  / 1000.0;
+			procTimeArray[5] = (timeArray[6] - timeArray[5])  / 1000.0;
 		}
-		calc_proctime_all( &g_all_proctime, &g_all_proctime_max, &g_all_proctime_min, timeArray[9], timeArray[10] );
+		calc_proctime_all( &g_all_proctime, &g_all_proctime_max, &g_all_proctime_min, timeArray[5], timeArray[6] );
 	}else{
-		procTimeArray[9] = -1.0;
+		procTimeArray[5] = -1.0;
 	}
 
 	//! LoopClosing処理時間
-	if( ( timeArray[10] != -1 ) && ( timeArray[11] != -1 ) ){  
-		if( timeArray[10] > timeArray[11] ){
-			procTimeArray[10]  = (timeArray[10] - timeArray[11])  / 1000.0;
+	if( ( timeArray[6] != -1 ) && ( timeArray[7] != -1 ) ){  
+		if( timeArray[6] > timeArray[7] ){
+			procTimeArray[6]  = (timeArray[6] - timeArray[7])  / 1000.0;
 		}else{
-			procTimeArray[10] = (timeArray[11] - timeArray[10])  / 1000.0;
+			procTimeArray[6] = (timeArray[7] - timeArray[6])  / 1000.0;
 		}
-		calc_proctime_all( &g_all_proctime, &g_all_proctime_max, &g_all_proctime_min, timeArray[10], timeArray[11] );
+		calc_proctime_all( &g_all_proctime, &g_all_proctime_max, &g_all_proctime_min, timeArray[6], timeArray[7] );
 		//! キーフレームが処理される間隔を導く。
-		if( g_prev_keyframe_time != 0 && ( timeArray[11] != 0 ) ){
+		if( (g_prev_keyframe_time != 0) && ( timeArray[6] != 0 ) && ( timeArray[7] != 0 )){
 
-			g_keyframe_proc_time = timeArray[11] - g_prev_keyframe_time;  
+			g_keyframe_proc_time = timeArray[6] - g_prev_keyframe_time;  
 			g_keyframe_proc_time_sum += g_keyframe_proc_time;
 			g_keyframe_proc_time_cnt++;
 			g_keyframe_proc_time_avg  = g_keyframe_proc_time_sum / g_keyframe_proc_time_cnt;
@@ -542,42 +476,40 @@ int collect( long *timeArray, double *procTimeArray,unsigned char *rowInfoStr){
 			if( g_keyframe_proc_time_min > g_keyframe_proc_time ){
 				g_keyframe_proc_time_min = g_keyframe_proc_time;
 			}
-			g_prev_keyframe_time  = timeArray[11];
+			g_prev_keyframe_time  = timeArray[7];
 	    } else{
-	    	if( timeArray[11] != 0  ){
-		    	g_prev_keyframe_time = timeArray[11];
+	    	if( (g_prev_keyframe_time == 0) && (timeArray[7] != 0 ) ){
+		    	g_prev_keyframe_time = timeArray[7];
 		    }
 	    }
 	}else{
-		procTimeArray[10] = -1.0;
+		procTimeArray[6] = -1.0;
 		g_loopclosing_lost++;
 	}
 
 	//! image_raw取得〜trackingまでの遅延時間・・・(1)
-	procTimeArray[11] =	((procTimeArray[0]==-1.0)?0.0:procTimeArray[0]) +
+	procTimeArray[7]  =	(((procTimeArray[0]==-1.0)?0.0:procTimeArray[0]) +
 											((procTimeArray[1]==-1.0)?0.0:procTimeArray[1]) +
-											((procTimeArray[2]==-1.0)?0.0:procTimeArray[2]) +
-											((procTimeArray[3]==-1.0)?0.0:procTimeArray[3]) +
-											((procTimeArray[4]==-1.0)?0.0:procTimeArray[4]);
+											((procTimeArray[2]==-1.0)?0.0:procTimeArray[2]));
 									
 	//! (1) + LocalMapping遅延時間	 ・・・(2)									
-	procTimeArray[12] =	procTimeArray[11] + 
-											((procTimeArray[7]==-1.0)?0.0:procTimeArray[7]) +
-											((procTimeArray[8]==-1.0)?0.0:procTimeArray[8]);
+	procTimeArray[8] =     procTimeArray[7] + 
+											((procTimeArray[3]==-1.0)?0.0:procTimeArray[3]) +
+											((procTimeArray[4]==-1.0)?0.0:procTimeArray[4]);
 	  
 	//! (2) + LoopClosing遅延時間 ・・・(3)										
-	procTimeArray[13] =	procTimeArray[12] + 
-											((procTimeArray[9]==-1.0)?0.0:procTimeArray[9]) +
-											((procTimeArray[10]==-1.0)?0.0:procTimeArray[10]);
+	procTimeArray[9] =		procTimeArray[8] + 
+											((procTimeArray[5]==-1.0)?0.0:procTimeArray[5]) +
+											((procTimeArray[6]==-1.0)?0.0:procTimeArray[6]);
 
 
 	//! 1フレームの処理時間										
-	for( int i = 0; i < 11; i++ ){
+	for( int i = 0; i < 7; i++ ){
 		if( procTimeArray[i] != -1.0 ){
-			procTimeArray[14] += procTimeArray[i];
+			procTimeArray[10] += procTimeArray[i];
 		}
 	}
-	for( int i = 0; i < 15; i++ ){
+	for( int i = 0; i < 11; i++ ){
 		if( procTimeArray[i] != -1.0){
 			sprintf((char*)rowInfoStr,"%s,%lf",rowInfoStr,procTimeArray[i]);
 		}else{
@@ -649,14 +581,6 @@ void CollectFIleOut(unsigned char *folder_name, unsigned long rows ){
 	wstream << str ;	 
 
 	memset(str,0x00,sizeof(str));
-	sprintf(str,"Orb-descriptor,%lu,%lu \n",rows-g_orb_descriptor_lost, g_orb_descriptor_lost  );
-	wstream << str ;	 
-
-	memset(str,0x00,sizeof(str));
-	sprintf(str,"Tracker-state,%lu,%lu \n",rows-g_tracker_state_lost,g_tracker_state_lost );
-	wstream << str ;	 
-
-	memset(str,0x00,sizeof(str));
 	sprintf(str,"Local Mapping,%lu,%lu \n",rows-g_localmapping_lost,g_localmapping_lost );
 	wstream << str ;	 
 
@@ -679,68 +603,48 @@ void CollectFIleOut(unsigned char *folder_name, unsigned long rows ){
 	wstream << str ;	 
 
 	memset(str,0x00,sizeof(str));
-	sprintf(str,"Image-Raw Subscribe<->Orb_Descriptor Publish,%lf,%lf,%lf\n",
+	sprintf(str,"Image-Raw Subscribe<->Tracking,%lf,%lf,%lf\n",
 			 g_all_procTime_max[2],g_all_procTime_min[2],g_all_procTime_avg[2]);
 	wstream << str ;	 
 
 	memset(str,0x00,sizeof(str));
-	sprintf(str,"Orb-Descriptor Communication Time,%lf,%lf,%lf\n", 
-			g_all_procTime_max[3],g_all_procTime_min[3],g_all_procTime_avg[3]);
-	wstream << str ;	 
-	
-	memset(str,0x00,sizeof(str));
-	sprintf(str,"Orb-Descriptor Subscribe<->Tracker-State Publish,%lf,%lf,%lf\n",
-			 g_all_procTime_max[4],g_all_procTime_min[4],g_all_procTime_avg[4]);
-	wstream << str ;	 
-
-	memset(str,0x00,sizeof(str));
-	sprintf(str,"Tracker-State Communication Time,%lf,%lf,%lf\n",
-			 g_all_procTime_max[5],g_all_procTime_min[5],g_all_procTime_avg[5]);
-	wstream << str ;	 
-
-	memset(str,0x00,sizeof(str));
-	sprintf(str,"Tracker-State Process Time,%lf,%lf,%lf\n",
-			 g_all_procTime_max[6],g_all_procTime_min[6],g_all_procTime_avg[6]);
-	wstream << str ;	 
-
-	memset(str,0x00,sizeof(str));
 	sprintf(str,"LocalMapping Wait Time,%lf,%lf,%lf\n",
-			 g_all_procTime_max[7],g_all_procTime_min[7],g_all_procTime_avg[7]);
+			 g_all_procTime_max[3],g_all_procTime_min[3],g_all_procTime_avg[3]);
 	wstream << str ;	 
 
 	memset(str,0x00,sizeof(str));
 	sprintf(str,"LocalMapping Process Time,%lf,%lf,%lf\n",
-			 g_all_procTime_max[8],g_all_procTime_min[8],g_all_procTime_avg[8]);
+			 g_all_procTime_max[4],g_all_procTime_min[4],g_all_procTime_avg[4]);
 	wstream << str ;	 
 
 	memset(str,0x00,sizeof(str));
 	sprintf(str,"LoopClosing Wait Time,%lf,%lf,%lf\n",
-			 g_all_procTime_max[9],g_all_procTime_min[9],g_all_procTime_avg[9]);
+			 g_all_procTime_max[5],g_all_procTime_min[5],g_all_procTime_avg[5]);
 	wstream << str ;	 
 
 	memset(str,0x00,sizeof(str));
 	sprintf(str,"LoopClosing Process Time,%lf,%lf,%lf\n",
-			 g_all_procTime_max[10],g_all_procTime_min[10],g_all_procTime_avg[10]);
+			 g_all_procTime_max[6],g_all_procTime_min[6],g_all_procTime_avg[6]);
 	wstream << str ;	 
 
 	memset(str,0x00,sizeof(str));
 	sprintf(str,"Image-Raw Read<->Tracking,%lf,%lf,%lf\n",
-			 g_all_procTime_max[11],g_all_procTime_min[11],g_all_procTime_avg[11]);
+			 g_all_procTime_max[7],g_all_procTime_min[7],g_all_procTime_avg[7]);
 	wstream << str ;	 
 
 	memset(str,0x00,sizeof(str));
 	sprintf(str,"Image-Raw Read<->LocalMapping,%lf,%lf,%lf\n",
-			 g_all_procTime_max[12],g_all_procTime_min[12],g_all_procTime_avg[12]);
+			 g_all_procTime_max[8],g_all_procTime_min[8],g_all_procTime_avg[8]);
 	wstream << str ;	 
 
 	memset(str,0x00,sizeof(str));
 	sprintf(str,"Image-Raw Read<->LoopClosing,%lf,%lf,%lf\n",
-			 g_all_procTime_max[13],g_all_procTime_min[13],g_all_procTime_avg[13]);
+			 g_all_procTime_max[9],g_all_procTime_min[9],g_all_procTime_avg[9]);
 	wstream << str;	 
 
 	memset(str,0x00,sizeof(str));
 	sprintf(str,"1 Frame Process Time,%lf,%lf,%lf\n",
-			 g_all_procTime_max[14],g_all_procTime_min[14],g_all_procTime_avg[14]);
+			 g_all_procTime_max[10],g_all_procTime_min[10],g_all_procTime_avg[10]);
 	wstream << str  << std::endl;	 
 
 	memset(str,0x00,sizeof(str));
@@ -787,7 +691,7 @@ int createFile( csv_format_t *csv_format, int size ){
 	struct tm tm;
 	time_t t; 
 	int ret = 0;
-
+	
 	memset( folder_name, 0x00,sizeof(folder_name) );
 	memset( fname, 0x00,sizeof(fname) );
 		
@@ -805,7 +709,7 @@ int createFile( csv_format_t *csv_format, int size ){
 	wstream.open( (const char*)fname, std::ios::out | std::ios::app );
 
 	memset(str,0x00,sizeof(str));
-	sprintf((char*)str,"ID,Image-raw read,,Image-row Subscribe<=>Orb-destractor Publish,,Tracker-State Proc,,Orb-destractor Subscribe<=> Track State Publish,,LocalMapping,,LoopClosing,,Image-raw ReadTime,Image-raw Communication Time,Image-raw Subscribe<=>Orb-destractor Publish,Orb-destracotr Communication Time,Orb-destractor Subscribe<=>Tracker-State Publish,Tracker-State Communication Time,Tracker-State ProcTime,LocalMapping WaitTime,LocalMapping ProcTime,LoopClosing WaitTime,LoopClosing ProcTime,Image-raw Read<=>Tracking,Image-raw Read<=>LocalMapping,Image-raw Read<=>LoopClosing,1 Frame Proc Time");
+	sprintf((char*)str,"ID,Image-raw read,,Image-row Subscribe<=>Tracking,,LocalMapping,,LoopClosing,,Image-raw ReadTime,Image-raw Communication Time,Image-raw Subscribe<=>Tracking,LocalMapping WaitTime,LocalMapping ProcTime,LoopClosing WaitTime,LoopClosing ProcTime,Image-raw Read<=>Tracking,Image-raw Read<=>LocalMapping,Image-raw Read<=>LoopClosing,1 Frame Proc Time");
 
 	wstream << str << std::endl;
 
@@ -816,6 +720,7 @@ int createFile( csv_format_t *csv_format, int size ){
 			memset(str,0x00,sizeof(str));
 			memset( rowInfoStr, 0x00, sizeof(rowInfoStr));
 			sprintf((char*)str,"%lf",csv_format[i].id);
+			wstream << str;
 			for( j = 0; j < (int)csv_format[i].date.size(); j++ ){
 				if( g_date_cnt[j] > 0 ){
 					memset(work,0x00,sizeof(work));
@@ -867,18 +772,19 @@ int main(int argc, char **argv){
 	std::vector<ros::ServiceClient> clients;
 	std::string path;
 		
-	ros::init(argc, argv, "measurment_client_node_div");		
+	ros::init(argc, argv, "measurment_client_node_normal");		
 	
 	ros::NodeHandle n;
 	//! 測定クラスの初期化処理を実施する。
 	g_measurmentClient = new measurmentManager();
 	
 	//! ファイルパスを取得する。
-	ros::param::get("/measurment_client_node_div/path",  g_measurmentClient->path);		
-	ros::param::get("/measurment_client_node_div/monitor/thread",thread_array);
-	ros::param::get("/measurment_client_node_div/monitor/type",type_array);
-	ros::param::get("/measurment_client_node_div/monitor/nodes",nodes);
-	ros::param::get("/measurment_client_node_div/monitor/srvs",srvs);
+	ros::param::get("/measurment_client_node_normal/path",  g_measurmentClient->path);		
+	ros::param::get("/measurment_client_node_normal/monitor/thread",thread_array);
+	ros::param::get("/measurment_client_node_normal/monitor/type",type_array);
+	ros::param::get("/measurment_client_node_normal/monitor/nodes",nodes);
+	ros::param::get("/measurment_client_node_normal/monitor/srvs",srvs);
+	
 	//! サービス名称を作成する。
 	for( int node = 0; node < (int)nodes.size(); node++){
 		sprintf(  (char*)service_name, "/%s/%s", nodes[node].c_str(), srvs[node].c_str() );
@@ -894,7 +800,7 @@ int main(int argc, char **argv){
 		ROS_ERROR("service call error");
 	}else{
 			if( (service.response.begin == 0)&&(service.response.end == 0) ){
-					return 0;
+				return 0;
 			}
 			//! IDの列を作成する。
 			for( int i = 0; i  < (int)service.response.cnt; i++ ){
@@ -922,6 +828,7 @@ int main(int argc, char **argv){
 			}
 		}
 	}			
+
 	createFile( &csv_format_array[0], csv_format_array.size() );					
 
 	return 0;
