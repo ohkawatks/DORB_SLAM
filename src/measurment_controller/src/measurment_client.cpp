@@ -129,6 +129,7 @@ int searchInsertPosition(measurment_controller::measurmentSrv *service,
 long str2time( unsigned char *buf ){
 
 	int hour = 0, min = 0, sec = 0,  milisecond = 0;
+	int year = 0, month = 0, day = 0;
 	char split[] = " "; 
 	char *tok;
 	unsigned char wk[256];
@@ -156,6 +157,15 @@ long str2time( unsigned char *buf ){
 	tok					= strtok(NULL,split); 
 	milisecond		= atoi(tok);
 
+
+	split[0]			= '-';
+	tok					= strtok((char*)date_str,(const char*)split); 
+	year              	= atoi(tok);
+ 	tok		            = strtok(NULL,split);
+	month           	= atoi(tok);
+	tok   	        	= strtok(NULL,split);
+	day           	    = atoi(tok);
+
 	split[0]	= ':';
 	tok		= strtok(time_str,split);
 	hour	= atoi(tok);
@@ -164,7 +174,7 @@ long str2time( unsigned char *buf ){
  	tok		= strtok(NULL,split);
 	sec		= atoi(tok);
 
-	time = (hour*3600000) + (min * 60000) + (sec*1000) + milisecond; 
+	time = (day*(24*3600000)) + (hour*3600000) + (min * 60000) + (sec*1000) + milisecond; 
 
 	return time;
 
