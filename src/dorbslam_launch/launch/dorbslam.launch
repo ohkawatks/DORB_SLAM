@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 
 <launch>
-	<arg name="vocabulary" default="/home/ubuntu/Utunomiya-university/catkin_ws20170119/src/DORB_SLAM/resources/voc/ORBvoc.txt" />
-  	<arg name="setting" default="/home/ubuntu/Utunomiya-university/catkin_ws20170119/src/DORB_SLAM/resources/settings/TUM1.yaml" />
+	<arg name="vocabulary" default="/home/orbslam/catkin_ws/src/DORB_SLAM/resources/voc/ORBvoc.txt" />
+  	<arg name="setting" default="/home/orbslam/catkin_ws/src/DORB_SLAM/resources/settings/TUM1.yaml" />
   	<arg name="div1" default="false" />
   	<arg name="div3" default="false" />  
 		<arg name="normal" default="false" />

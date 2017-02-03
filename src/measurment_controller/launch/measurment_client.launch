@@ -1,7 +1,15 @@
 <launch>
-	<arg name="controller_argument" default="" />
-	<node pkg="measurment_controller" type="measurment_client_node" name="measurment_client_node" output="screen">
-		<rosparam file="$(find measurment_controller)/config/config.yaml" command="load" />
- 	</node>
-</launch>
+  	<arg name="div" default="false" />
+  	<arg name="normal" default="false" />  
+	<group if="$(arg div)">
+		<node pkg="measurment_controller" type="measurment_client_node_div" name="measurment_client_node_div" output="screen">
+			<rosparam file="$(find measurment_controller)/config/config.yaml" command="load" />
+		</node>
+	</group>
+	<group if="$(arg normal)">
+		<node pkg="measurment_controller" type="measurment_client_node_normal" name="measurment_client_node_normal" output="screen">
+			<rosparam file="$(find measurment_controller)/config/config.yaml" command="load" />
+		</node>
+	</group>
+ </launch>
 

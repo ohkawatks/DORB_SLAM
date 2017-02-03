@@ -165,7 +165,7 @@ src/${PROJECT_NAME}/Initializer.cc
 src/${PROJECT_NAME}/Viewer.cc
 ../measurment_controller/src/measurmentManager.cpp
 )
-#target_compile_definitions(${PROJECT_NAME} PUBLIC__DISABLE_GUI=1)
+#target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT=1 PUBLIC __DISABLE_GUI=1)
 add_dependencies( ${PROJECT_NAME} SHARED measurment_controller_generate_messages_cpp)
 
 #define macro only in the orbslam library for div2 
@@ -193,7 +193,7 @@ src/${PROJECT_NAME}/Viewer.cc
 )
 add_dependencies( ${PROJECT_NAME}_div2 SHARED measurment_controller_generate_messages_cpp)
 
-#target_compile_definitions(${PROJECT_NAME}_div2 PUBLIC ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT=1 PUBLIC__DISABLE_GUI=1)
+#target_compile_definitions(${PROJECT_NAME}_div2 PUBLIC ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT=1 PUBLIC __DISABLE_GUI=1)
 target_compile_definitions(${PROJECT_NAME}_div2 PUBLIC ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT=1)
 ## Declare a C++ library
 # add_library(orbslam

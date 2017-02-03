@@ -38,11 +38,18 @@ include_directories(
  ${catkin_INCLUDE_DIRS}
 )
 
-add_executable( measurment_client_node
+add_executable( measurment_client_node_div
 	src/measurment_client.cpp 
 	src/measurmentManager.cpp )
-target_link_libraries( measurment_client_node  ${catkin_LIBRARIES} )
-add_dependencies( measurment_client_node measurment_controller_generate_messages_cpp)
+
+target_link_libraries( measurment_client_node_div  ${catkin_LIBRARIES} )
+add_dependencies( measurment_client_node_div measurment_controller_generate_messages_cpp)
+
+add_executable( measurment_client_node_normal
+	src/measurment_client_none.cpp 
+	src/measurmentManager.cpp )
+target_link_libraries( measurment_client_node_normal  ${catkin_LIBRARIES} )
+add_dependencies( measurment_client_node_normal measurment_controller_generate_messages_cpp)
 
 add_executable( measurment_server_node
 	src/measurment_server.cpp 
