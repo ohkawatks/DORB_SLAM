@@ -43,7 +43,8 @@ add_executable( measurment_client_node_div
 	src/measurmentManager.cpp )
 
 target_link_libraries( measurment_client_node_div  ${catkin_LIBRARIES} )
-add_dependencies( measurment_client_node_div measurment_controller_generate_messages_cpp)
+add_dependencies( measurment_client_node_div measurment_controller_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
+
 
 add_executable( measurment_client_node_normal
 	src/measurment_client_none.cpp 

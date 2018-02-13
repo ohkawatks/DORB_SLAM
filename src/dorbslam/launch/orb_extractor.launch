@@ -3,7 +3,10 @@
 <launch>
   <arg name="vocabulary"/>
   <arg name="setting" />
+  <arg name="image_topic" default="/camera/image_raw"/>
   <!-- Leg detection -->
   <node name="orb_extractor_node" pkg="dorbslam" type="orb_extractor_node"
-    args="$(arg vocabulary) $(arg setting)" />
+        args="$(arg vocabulary) $(arg setting)">
+    <remap from="/camera/image_raw" to="$(arg image_topic)"/>
+  </node>
 </launch>

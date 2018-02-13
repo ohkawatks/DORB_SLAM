@@ -30,15 +30,14 @@
 #include<opencv2/core/core.hpp>
 
 #include"System.h"
-#ifdef ENABLE_PERFORM   
+#ifdef ENABLE_PERFORM
 #include "measurmentManager.h"
 #endif
 
-#ifdef ENABLE_PERFORM   
-extern measurmentManager *	g_measurmentServer;
+#ifdef ENABLE_PERFORM
+extern measurmentManager *g_measurmentServer;
 extern char* __progname;
 #endif
-	
 using namespace std;
 
 class ImageGrabber
@@ -53,7 +52,7 @@ public:
 
 int main(int argc, char **argv)
 {
-#ifdef ENABLE_PERFORM   
+#ifdef ENABLE_PERFORM
     unsigned char measument_path[256];
 #endif
 
@@ -62,20 +61,18 @@ int main(int argc, char **argv)
 
     if(argc != 3)
     {
-        cerr << endl << "Usage: rosrun ORB_SLAM2 Mono path_to_vocabulary path_to_settings" << endl;        
+        cerr << endl << "Usage: rosrun ORB_SLAM2 Mono path_to_vocabulary path_to_settings" << endl;
         ros::shutdown();
         return 1;
-    }    
+    }
     ros::NodeHandle nodeHandler;
 
-#ifdef ENABLE_PERFORM   
+#ifdef ENABLE_PERFORM
     g_measurmentServer = new measurmentManager();
-        
-	memset( (char*)measument_path,0x00, sizeof(measument_path));
-	sprintf( (char*)measument_path,"/%s/measurment",__progname);
-
-    ros::ServiceServer server = nodeHandler.advertiseService( (char*)measument_path, 
-																					&measurmentManager::service, g_measurmentServer);
+    memset( (char*)measument_path,0x00, sizeof(measument_path));
+    sprintf( (char*)measument_path,"/%s/measurment",__progname);
+    ros::ServiceServer server = nodeHandler.advertiseService( (char*)measument_path,
+                                                              &measurmentManager::service, g_measurmentServer);
 #endif
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
@@ -85,22 +82,21 @@ int main(int argc, char **argv)
 
     ros::Subscriber sub = nodeHandler.subscribe("/camera/image_raw", 1, &ImageGrabber::GrabImage,&igb);
 
-#ifdef ENABLE_PERFORM   
-  	g_measurmentServer->processThroughputEntry(0,0,"ImageGrabber::GrabDescriptor");	
+#ifdef ENABLE_PERFORM
+    g_measurmentServer->processThroughputEntry(0,0,"ImageGrabber::GrabDescriptor");
 #endif
 
-	while ( ros::ok() ){
-		ros::spinOnce();
-	}   
+    while ( ros::ok() ){
+      ros::spinOnce();
+    }
 
-#ifdef ENABLE_PERFORM   
-  	g_measurmentServer->processThroughputDelete(0,0);	
+#ifdef ENABLE_PERFORM
+    g_measurmentServer->processThroughputDelete(0,0);
 #endif
 
     // Stop all threads
     SLAM.Shutdown();
-    
-        time_t rawtime;
+    time_t rawtime;
     struct tm * timeinfo;
     char fname[255];
 
@@ -122,7 +118,7 @@ int main(int argc, char **argv)
 void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
 {
 
-#ifdef ENABLE_PERFORM   
+#ifdef ENABLE_PERFORM
 	g_measurmentServer->processThroughputThreadStart(0,0,msg->header.stamp.toSec());
 #endif
 
@@ -139,7 +135,7 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
     }
     mpSLAM->TrackMonocular(cv_ptr->image,cv_ptr->header.stamp.toSec());
 
-#ifdef ENABLE_PERFORM   
+#ifdef ENABLE_PERFORM
 	g_measurmentServer->processThroughputThreadEnd(0,0,msg->header.stamp.toSec());
 #endif
 }

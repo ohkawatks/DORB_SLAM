@@ -34,8 +34,8 @@
 #include "dorbslam/KeyPoint.h"
 #include "dorbslam/TrackingState.h"
 #include "std_msgs/Int32.h"
-
-#ifdef ENABLE_PERFORM   	
+#include "dorbslam/TimeStamp.h"
+#ifdef ENABLE_PERFORM
 #include "measurmentManager.h"
 #endif
 
@@ -44,8 +44,8 @@
 #define STATE_TOPIC ("/tracker_state")
 using namespace std;
 
-#ifdef ENABLE_PERFORM   	
-extern measurmentManager *	g_measurmentServer;
+#ifdef ENABLE_PERFORM
+extern measurmentManager *g_measurmentServer;
 extern char* __progname;
 #endif
 
@@ -54,11 +54,11 @@ class ImageGrabber
 public:
   //ImageGrabber(ORB_SLAM2::System* pSLAM):mpSLAM(pSLAM){}
   ImageGrabber(ros::NodeHandle nh,
-               int nRGB, 
-               int nFeatures, 
-               float fScaleFactor, 
-               int nLevels, 
-               int fIniThFAST, 
+               int nRGB,
+               int nFeatures,
+               float fScaleFactor,
+               int nLevels,
+               int fIniThFAST,
                int fMinThFAST
                )
     :mbRGB(nRGB),
@@ -66,6 +66,10 @@ public:
      mORBextractorLeft(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST),
      msub_state(nh.subscribe(STATE_TOPIC, 1, &ImageGrabber::GrabState, this)),
      mpub(nh.advertise<dorbslam::OrbDescriptor>(PUBLISH_TOPIC_NAME, 1000)),
+#ifdef PUBLISH_TIME_STAMP
+      pub_start_stamp_(nh.advertise<dorbslam::TimeStamp>("/time_stamp/orb_extractor_mono/begin", 100)),
+      pub_end_stamp_(nh.advertise<dorbslam::TimeStamp>("/time_stamp/orb_extractor_mono/end", 100)),
+#endif
     mTrackerState(ORB_SLAM2::Tracking::SYSTEM_NOT_READY)//SYSTEM_NOT_READY
   {
 
@@ -79,14 +83,18 @@ private:
   ORB_SLAM2::ORBextractor mORBextractorLeft;
   ros::Subscriber msub_state;
   ros::Publisher mpub;
+#ifdef PUBLISH_TIME_STAMP
+    ros::Publisher pub_start_stamp_;
+    ros::Publisher pub_end_stamp_;
+#endif
 
   int mTrackerState;
 };
 
 int main(int argc, char **argv)
 {
- #ifdef ENABLE_PERFORM   
-	unsigned char measument_path[256];
+#ifdef ENABLE_PERFORM
+  unsigned char measument_path[256];
 #endif
 
     ros::init(argc, argv, "orb_extractor");
@@ -94,25 +102,24 @@ int main(int argc, char **argv)
 
     if(argc != 3)
     {
-        cerr << endl << "Usage: rosrun ORB_SLAM2 Mono path_to_vocabulary path_to_settings" << endl;        
+        cerr << endl << "Usage: rosrun ORB_SLAM2 Mono path_to_vocabulary path_to_settings" << endl;
         ros::shutdown();
         return 1;
-    }    
+    }
 
-#ifdef ENABLE_PERFORM   
+#ifdef ENABLE_PERFORM
     g_measurmentServer = new measurmentManager();
-  	g_measurmentServer->processThroughputEntry(0,0,"ImageGrabber::GrabImage");	
-  	g_measurmentServer->processThroughputEntry(0,1,"ImageGrabber::GrabState");	
-    
+    g_measurmentServer->processThroughputEntry(0,0,"ImageGrabber::GrabImage");
+    g_measurmentServer->processThroughputEntry(0,1,"ImageGrabber::GrabState");
     memset( (char*)measument_path,0x00, sizeof(measument_path));
-	sprintf( (char*)measument_path,"/%s/measurment",__progname);
+    sprintf( (char*)measument_path,"/%s/measurment",__progname);
 #endif
 
     ros::NodeHandle nodeHandler;
 
-#ifdef ENABLE_PERFORM   
+#ifdef ENABLE_PERFORM
     ros::ServiceServer server = nodeHandler.advertiseService( (char*)measument_path, 
-																					&measurmentManager::service, g_measurmentServer);
+                                                              &measurmentManager::service, g_measurmentServer);
 #endif
 
     cv::FileStorage fSettings(argv[2], cv::FileStorage::READ);
@@ -125,19 +132,18 @@ int main(int argc, char **argv)
     int nLevels = fSettings["ORBextractor.nLevels"];
     int fIniThFAST = fSettings["ORBextractor.iniThFAST"];
     int fMinThFAST = fSettings["ORBextractor.minThFAST"];
-    
     int nRGB = fSettings["Camera.RGB"];
     ImageGrabber igb(nodeHandler, nRGB, nFeatures, fScaleFactor, nLevels, fIniThFAST, fMinThFAST);//&SLAM);
 
     ros::Subscriber sub = nodeHandler.subscribe(IMAGE_TOPIC, 1, &ImageGrabber::GrabImage,&igb);
 
-	while ( ros::ok() ){
-		ros::spinOnce();
-	}   
+    while ( ros::ok() ){
+      ros::spinOnce();
+    }
 
-#ifdef ENABLE_PERFORM   
-  	g_measurmentServer->processThroughputDelete(0,0);	
-  	g_measurmentServer->processThroughputDelete(0,1);	
+#ifdef ENABLE_PERFORM
+    g_measurmentServer->processThroughputDelete(0,0);
+    g_measurmentServer->processThroughputDelete(0,1);
 #endif
 
     // Save camera trajectory
@@ -149,10 +155,21 @@ int main(int argc, char **argv)
 void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
 {
 
-#ifdef ENABLE_PERFORM   
-  	g_measurmentServer->processThroughputThreadStart(0,0,msg->header.stamp.toSec());	
+// #ifdef ENABLE_PERFORM
+//  g_measurmentServer->processThroughputThreadStart(0,0,msg->header.stamp.toSec());
+// #endif
+
+#ifdef PUBLISH_TIME_STAMP
+      {
+        dorbslam::TimeStamp stamp;
+        ros::WallTime wallstamp = ros::WallTime::now();
+        stamp.wall_stamp.sec = wallstamp.sec;
+        stamp.wall_stamp.nsec = wallstamp.nsec;
+        stamp.header.stamp = msg->header.stamp;
+        pub_start_stamp_.publish(stamp);
+      }
 #endif
-	
+
     // Copy the ros image message to cv::Mat.
     cv_bridge::CvImageConstPtr cv_ptr;
     try
@@ -193,9 +210,8 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
       extractor = &mORBextractorLeft;
     }
     //extract descriptors
-    (*extractor)(img,cv::Mat(), keypoints, descriptors);    
+    (*extractor)(img,cv::Mat(), keypoints, descriptors);
 
-    
     dorbslam::OrbDescriptor desc;
     dorbslam::KeyPoint kp;
     dorbslam::ExtractorSettings settings;
@@ -208,7 +224,7 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
       kp.pt[1]=keypoints[i].pt.y;
       kp.response=keypoints[i].response;
       kp.size=keypoints[i].size;
-      
+
       for(int j =0;j<32;j++){
         kp.descriptor[j] = descriptors.data[i*32+j];
       }
@@ -229,8 +245,20 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
     desc.header = cv_ptr->header;
     mpub.publish(desc);
 
-#ifdef ENABLE_PERFORM   
-   	g_measurmentServer->processThroughputThreadEnd(0,0,msg->header.stamp.toSec());	
+
+#ifdef PUBLISH_TIME_STAMP
+      {
+        dorbslam::TimeStamp stamp;
+        ros::WallTime wallstamp = ros::WallTime::now();
+        stamp.wall_stamp.sec = wallstamp.sec;
+        stamp.wall_stamp.nsec = wallstamp.nsec;
+        stamp.header.stamp = msg->header.stamp;
+        pub_end_stamp_.publish(stamp);
+      }
+#endif
+
+#ifdef ENABLE_PERFORM
+      g_measurmentServer->processThroughputThreadEnd(0,0,msg->header.stamp.toSec());
 #endif
   ////////////////////
     //mpSLAM->TrackMonocular(cv_ptr->image,cv_ptr->header.stamp.toSec());
@@ -238,14 +266,14 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
 
 void ImageGrabber::GrabState(const dorbslam::TrackingStateConstPtr& msg){
 
-#ifdef ENABLE_PERFORM   
- 	g_measurmentServer->processThroughputThreadStart(0,1,msg->header.stamp.toSec());
-#endif 
+#ifdef ENABLE_PERFORM
+  g_measurmentServer->processThroughputThreadStart(0,1,msg->header.stamp.toSec());
+#endif
 
-	this->mTrackerState = msg->data;
- 
-#ifdef ENABLE_PERFORM   
-	g_measurmentServer->processThroughputThreadEnd(0,1,msg->header.stamp.toSec());
-#endif 
+  this->mTrackerState = msg->data;
+
+#ifdef ENABLE_PERFORM
+  g_measurmentServer->processThroughputThreadEnd(0,1,msg->header.stamp.toSec());
+#endif
 
 }

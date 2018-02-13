@@ -63,6 +63,7 @@ find_package(Pangolin REQUIRED)
    VertexMP.msg
    LocalGraph.msg
    TrackingState.msg
+   TimeStamp.msg
  )
 
 # Generate services in the 'srv' folder
@@ -136,7 +137,11 @@ include_directories(
   .
   Thirdparty/g2o/g2o/core
   ../measurment_controller/include    
-)
+  )
+
+# comment out lines below if you don't need timestamp topics published
+message(STATUS "timestamp enabled")
+ADD_DEFINITIONS("-DPUBLISH_TIME_STAMP")
 
 # dont define the DENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT 
 # if you like to build the orbslam library without ROS
@@ -165,6 +170,7 @@ src/${PROJECT_NAME}/Initializer.cc
 src/${PROJECT_NAME}/Viewer.cc
 ../measurment_controller/src/measurmentManager.cpp
 )
+
 #target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT=1 PUBLIC __DISABLE_GUI=1)
 add_dependencies( ${PROJECT_NAME} SHARED measurment_controller_generate_messages_cpp)
 
@@ -192,7 +198,6 @@ src/${PROJECT_NAME}/Viewer.cc
 ../measurment_controller/src/measurmentManager.cpp
 )
 add_dependencies( ${PROJECT_NAME}_div2 SHARED measurment_controller_generate_messages_cpp)
-
 #target_compile_definitions(${PROJECT_NAME}_div2 PUBLIC ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT=1 PUBLIC __DISABLE_GUI=1)
 target_compile_definitions(${PROJECT_NAME}_div2 PUBLIC ENABLE_EXTERNAL_LOCALBUNDLE_ADJUSTMENT=1)
 ## Declare a C++ library

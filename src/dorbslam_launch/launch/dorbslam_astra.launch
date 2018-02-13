@@ -12,6 +12,7 @@
     <include file="$(find dorbslam)/launch/orb_extractor.launch">
       <arg name="vocabulary" value="$( arg vocabulary )" />
       <arg name="setting" value="$( arg setting )" />
+      <arg name="image_topic" value="/camera/rgb/image_rect_color" />
     </include>
   </group>
   <group if="$(arg div1)">
@@ -36,6 +37,7 @@
     <include file="$(find dorbslam)/launch/dorbslam.launch">
       <arg name="vocabulary" value="$( arg vocabulary )" />
       <arg name="setting" value="$( arg setting )" />
+      <arg name="image_topic" value="/camera/rgb/image_rect_color" />
     </include>
   </group>
 </launch>
