@@ -151,10 +151,9 @@ If you'd like to see performance in DORBSLAM,define "ENABLE_PERFORMENCE" deffini
         add_definitions(-DENABLE_PERFORM)
  
  # Acknowledgements
-This is a R&D project by Takeshi Ohkawa, Utsunomiya University.
-
-https://sites.google.com/site/ohkawatakeshi/profile_en
-http://www.is.utsunomiya-u.ac.jp/pearlab/openreroc/en/
+This R&D project is done by Takeshi Ohkawa, Utsunomiya University.
+- https://sites.google.com/site/ohkawatakeshi/profile_en
+- http://www.is.utsunomiya-u.ac.jp/pearlab/openreroc/en/
 
 This research and development work was supported by MIC/SCOPE #152103014.
  
