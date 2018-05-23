@@ -152,6 +152,7 @@ If you'd like to see performance in DORBSLAM,define "ENABLE_PERFORMENCE" deffini
  
  # Acknowledgements
 This is a R&D project by Takeshi Ohkawa, Utsunomiya University.
+
 https://sites.google.com/site/ohkawatakeshi/profile_en
 http://www.is.utsunomiya-u.ac.jp/pearlab/openreroc/en/
 
