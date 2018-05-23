@@ -1,6 +1,11 @@
 # DORB_SLAM
 Distributed ORB SLAM
 
+This is a R&D project by Takeshi Ohkawa, Utsunomiya University.
+http://www.is.utsunomiya-u.ac.jp/pearlab/openreroc/en/
+
+This research and development work was supported by MIC/SCOPE #152103014.
+
 #1 Prerequisites
 We have tested the library in and **14.04** + ROS Indigo. Only Monocular camera dataset is supported for now.
 
